@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, KeyboardEvent, ChangeEvent } from 'react';
-import { Github, Mail } from 'lucide-react';
+import { Github, Linkedin, Mail } from 'lucide-react';
+import { useCommandHistory } from '../hooks/useCommandHistory';
+import { useTabCompletion } from '../hooks/useTabCompletion';
+import { useTerminalVisuals } from '../hooks/useTerminalVisuals';
+import { CommandInput } from './terminal/CommandInput';
+import { TerminalOutput } from './terminal/TerminalOutput';
 
 interface HistoryEntry {
   type: 'system' | 'command' | 'error';
@@ -7,7 +12,7 @@ interface HistoryEntry {
 }
 
 interface Commands {
-  [key: string]: () => { type: 'system' | 'error'; content: string; } | null;
+  [key: string]: () => { type: 'system' | 'error'; content: string; effect?: 'typing' | 'loding'; } | null;
 }
 
 const Terminal: React.FC = () => {
@@ -19,6 +24,10 @@ const Terminal: React.FC = () => {
     }
   ]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { addToHistory, navigateHistory } = useCommandHistory();
+  const availableCommands = ['help', 'cmd1', 'cmd2', 'cmd3', 'dog', 'clear'];
+  const { completeCommand } = useTabCompletion(availableCommands);
+  const { startTypingEffect, startLoadingEffect } = useTerminalVisuals();
 
   const commands: Commands = {
     help: () => ({
@@ -29,19 +38,23 @@ const Terminal: React.FC = () => {
 - cmd3: placeholder command 3
 - oatmeal: woof
 - clear: clear terminal
-- help: show this message`
+- help: show this message`,
+      effect: 'typing' as const
     }),
     cmd1: () => ({
       type: 'system',
-      content: '<placeholder>'
+      content: '<placeholder>',
+      effect: 'typing' as const
     }),
     cmd2: () => ({
       type: 'system',
-      content: '<placeholder>'
+      content: '<placeholder>',
+      effect: 'typing' as const
     }),
     cmd3: () => ({
       type: 'system',
-      content: '<placeholder>'
+      content: '<placeholder>',
+      effect: 'typing' as const
     }),
     oatmeal: () => ({
       type: 'system',
@@ -54,7 +67,9 @@ const Terminal: React.FC = () => {
  ___Y  ,    .'7 /|
 (_,___/...-^ (_/_/
 
-woof`
+woof`,
+      effect: 'typing' as const
+
     }),
     clear: () => {
       setHistory([]);
