@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, KeyboardEvent, ChangeEvent } from 'react';
-import { Github, Linkedin, Mail, Terminal as TerminalIcon } from 'lucide-react';
+import { Github, Mail } from 'lucide-react';
 
 interface HistoryEntry {
   type: 'system' | 'command' | 'error';
