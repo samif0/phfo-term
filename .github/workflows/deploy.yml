@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+          cache-dependency-path: "../../pnpm-lock.yaml"
 
       - name: Install dependencies
         run: pnpm i
