@@ -14,16 +14,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '22'
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm i
 
       - name: Build
         env:
           CI: false
-        run: npm run build
+        run: pnpm build
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
