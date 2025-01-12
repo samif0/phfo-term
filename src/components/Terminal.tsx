@@ -5,10 +5,12 @@ import { useTabCompletion } from '../hooks/useTabCompletion';
 import { useTerminalVisuals } from '../hooks/useTerminalVisuals';
 import { CommandInput } from './terminal/CommandInput';
 import { TerminalOutput } from './terminal/TerminalOutput';
+import { WritingEffect } from './terminal/WritingEffects';
 
 interface HistoryEntry {
   type: 'system' | 'command' | 'error';
   content: string;
+  effect?: 'typing' | 'loding';
 }
 
 interface Commands {
@@ -136,9 +138,18 @@ woof`,
                 fontFamily: '"EnvyCodeR Nerd Font", monospace',
               }}
             >
-              {entry.content.split('\n').map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
+              {entry.effect === 'typing' ? ( 
+                  <WritingEffect 
+                    text={entry.content}
+                    className={`${
+                      entry.type === 'error' ? 'text-[#5f8787]' : 
+                      entry.type === 'command' ? 'text-[#99bbaa]' : 
+                      'text-[#c1c1c1]'
+                    }`}
+                  />
+                ) : (entry.content.split('\n').map((line, i) => (
+                    <div key={i}>{line}</div>
+              )))}
             </div>
           ))}
           <div className="flex items-center">
