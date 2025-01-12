@@ -1,9 +1,10 @@
 import React from 'react';
-import Terminal from './components/Terminal';
 
 function App() {
   return (
-    <Terminal />
+    <>
+      <h1>build in progress</h1>
+    </>
   );
 }
 
