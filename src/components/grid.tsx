@@ -22,7 +22,7 @@ export default function Grid({rows, cols}: GridProps) {
             {grid.map((row, rowIndex) => (
                 <div key={rowIndex} className="row">
                     {row.map((cell, colIndex) => (
-                        <button onClick={e => {
+                        <button onClick={()=> {
                             updateCell(rowIndex, colIndex, grid[rowIndex][colIndex] + 1);
                         }}
                         key={colIndex}
