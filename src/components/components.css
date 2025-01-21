@@ -30,3 +30,11 @@
     margin-bottom: 1rem;
     text-align: right;
 }
+
+.row {
+    display: flex;
+}
+
+.cell {
+    margin: 0 4px;
+}
