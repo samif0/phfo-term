@@ -2,6 +2,7 @@ export interface WritingData{
   slug: string;
   title: string;
   content: string;
+  date: string;
 }
 
 export const writings: WritingData[] = [

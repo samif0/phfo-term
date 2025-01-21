@@ -5,24 +5,23 @@ import { getWriting } from '@/data/writings-data';
 import GoBack from '@/components/goback';
 
 interface WritingPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 
-export async function generateStaticParams() {
-  const writings = getAllWritings(); // You'll need this function to return all possible slugs
+export function generateStaticParams() {
+  const writings = getAllWritings();
   
   return writings.map((writing) => ({
     slug: writing.slug,
   }));
 }
 
-export default async function WritingPage({ params }: WritingPageProps) {
-  const awaited_params = await params;
-  
-  const writingData = getWriting(awaited_params.slug);
+export default async function WritingPage({ params }: WritingPageProps) { 
+  const awaitedParams = await params;
+  const writingData = getWriting(awaitedParams.slug);
   
   if (!writingData) {
     notFound();
