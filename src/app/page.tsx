@@ -15,7 +15,7 @@ export default function Home() {
       </Link>
       <Grid
       rows={10} 
-      cols={10}>
+      cols={50}>
       </Grid>
     </div>
   );
