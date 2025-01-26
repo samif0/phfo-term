@@ -3,7 +3,6 @@
 import { useImmer } from 'use-immer';
 import { useRef, useEffect } from 'react';
 import './components.css';
-import { getTargetTriple } from 'next/dist/build/swc/generated-native';
 
 interface GridProps {
     rows: number;
@@ -31,7 +30,7 @@ export default function Grid({rows, cols}: GridProps) {
             let mi = Number.MAX_SAFE_INTEGER;
             for(let i = 0; i < rows; i++) {
                 for(let j = 0; j < cols; j++) {
-                    let val = draft[i][j] >= 100 ? Math.floor(draft[i][j] - (Math.random()*10)) : Math.ceil(draft[i][j] + (Math.random()*10));
+                    const val = draft[i][j] >= 100 ? Math.floor(draft[i][j] - (Math.random()*10)) : Math.ceil(draft[i][j] + (Math.random()*10));
                     updateCell(i, j, val);
                     mi = Math.min(val, mi)
                     ma = Math.max(val, ma)
