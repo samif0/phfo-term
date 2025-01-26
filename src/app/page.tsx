@@ -14,8 +14,8 @@ export default function Home() {
         programs
       </Link>
       <Grid
-      rows={10} 
-      cols={50}>
+      rows={20} 
+      cols={20}>
       </Grid>
     </div>
   );
