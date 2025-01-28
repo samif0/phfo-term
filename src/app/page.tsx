@@ -1,4 +1,3 @@
-import Grid from '@/components/grid';
 import Link from 'next/link';
 
 export default function Home() {
@@ -12,11 +11,7 @@ export default function Home() {
       </Link>
       <Link href="/programs" className="text-white hover:text-gray-300 z-10">
         programs
-      </Link>
-      <Grid
-      rows={20} 
-      cols={20}>
-      </Grid>
+      </Link> 
     </div>
   );
 }

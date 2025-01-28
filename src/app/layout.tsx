@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Boids from "@/components/boids";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
       </head>
       <body className={`${deptnf.className} min-h-screen bg-black text-white antialiased`}>
         <main className="flex min-h-screen flex-col">
+          <Boids/>
           {children}
         </main>
       </body>
