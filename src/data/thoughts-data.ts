@@ -4,6 +4,7 @@ export interface ThoughtData {
   date: string;
 }
 
+//TODO: move to cloud
 export const thoughts: ThoughtData[] = [
   {
     slug: '2025-01-25',
