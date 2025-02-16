@@ -5,6 +5,7 @@ export interface WritingData{
   date: string;
 }
 
+//TODO: move to cloud
 export const writings: WritingData[] = [
   {
     slug: 'damning-lucidity',
