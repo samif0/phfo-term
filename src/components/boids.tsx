@@ -142,7 +142,7 @@ export default function Boids() {
       const animate = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-        boidsRef.current.forEach((boid, i) => {
+        boidsRef.current.forEach((boid) => {
           const separation = calculateSeparation(boid, boidsRef.current);
           const alignment = calculateAlignment(boid, boidsRef.current);
           const cohesion = calculateCohesion(boid, boidsRef.current);
@@ -151,10 +151,8 @@ export default function Boids() {
           const normAlignment = normalizeVector(alignment);
           const normCohesion = normalizeVector(cohesion);
           
-          const forceX = normSeparation.x * 0.05 + normAlignment.x * 0.02 
-          //+ cohesion.x * 0.01;
-          const forceY = normSeparation.y * 0.05 + normAlignment.y * 0.02 
-          //+ cohesion.y * 0.01;
+          const forceX = normSeparation.x * 0.05 + normAlignment.x * 0.02 + normCohesion.x * 0.01;
+          const forceY = normSeparation.y * 0.05 + normAlignment.y * 0.02 + normCohesion.y * 0.01;
 
           
           boid.dx += forceX + boid.dx * 0.9995;
