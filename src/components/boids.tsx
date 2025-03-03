@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 function isNeighbor(boid: { x: number; y: number; dx: number; dy: number, s: number;}, otherBoid: { x: number; y: number; dx: number; dy: number, s: number; } ){
   const distance = Math.sqrt(Math.pow(otherBoid.x - boid.x, 2) + Math.pow(otherBoid.y - boid.y, 2));
 
-  if(distance < 10){
+  if(distance < 50){
     return true;
   } else {
     return false;
@@ -33,11 +33,12 @@ function calculateSeparation(boid: { x: number; y: number; dx: number; dy: numbe
     if (boid === otherBoid) continue;
 
     if(isNeighbor(boid, otherBoid) && boid.s == otherBoid.s) {
-      const distance = Math.sqrt(Math.pow(otherBoid.x - boid.x, 2) + Math.pow(otherBoid.y - boid.y, 2));
-      const separationX = (boid.x - otherBoid.x) / distance;
-      const separationY = (boid.y - otherBoid.y) / distance;
+      const distance = (otherBoid.x - boid.x) + (otherBoid.y - boid.y);
+      const separationX = (boid.x - otherBoid.x);
+      const separationY = (boid.y - otherBoid.y);
       avgSeparationX += separationX;
       avgSeparationY += separationY;
+      console.log(distance);
       numNeighbors++;
     }
   }
@@ -122,10 +123,10 @@ export default function Boids() {
       // Log to verify dimensions are correct
       console.log("Canvas dimensions:", canvas.width, canvas.height);
 
-      const maxSpeed = 3;
+      const maxSpeed = 0.5;
  
-      const min = -1;
-      const max = 1;
+      const min = -0.05;
+      const max = 0.05;
       if (boidsRef.current.length === 0) {
         boidsRef.current = Array(50).fill(null).map(() => ({
           x: Math.random() * dimensions.width,
@@ -151,8 +152,8 @@ export default function Boids() {
           const normAlignment = normalizeVector(alignment);
           const normCohesion = normalizeVector(cohesion);
           
-          const forceX = normSeparation.x * 0.05 + normAlignment.x * 0.02 + normCohesion.x * 0.01;
-          const forceY = normSeparation.y * 0.05 + normAlignment.y * 0.02 + normCohesion.y * 0.01;
+          const forceX = normSeparation.x * 0.04 + normAlignment.x * 0.05 + normCohesion.x * 0.01;
+          const forceY = normAlignment.y * 0.05 + normCohesion.y * 0.01 + normSeparation.y * 0.04;
 
           
           boid.dx += forceX + boid.dx * 0.9995;
