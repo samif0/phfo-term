@@ -4,6 +4,8 @@ name: Deploy to AWS
   push:
     branches:
       - main
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
   deploy:
