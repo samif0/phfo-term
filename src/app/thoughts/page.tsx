@@ -2,6 +2,8 @@ import Link from 'next/link';
 import GoBack from '@/components/goback';
 import { getAllThoughts } from '@/lib/data/thoughts';
 
+export const revalidate = 60;
+
 export default async function ThoughtsPage() {
 
     const thoughts = await getAllThoughts()

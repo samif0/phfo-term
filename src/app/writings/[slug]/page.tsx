@@ -3,12 +3,13 @@ import Writing from '@/components/writing';
 import GoBack from '@/components/goback';
 import { getAllWritings, getWriting } from '@/lib/data/writings';
 
+export const revalidate = 60;
+
 interface WritingPageProps {
   params: Promise<{
     slug: string
   }>
 }
-
 
 export async function generateStaticParams() {
   const writings = await getAllWritings();

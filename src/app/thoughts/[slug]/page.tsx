@@ -3,6 +3,8 @@ import Thought from '@/components/thought';
 import { getAllThoughts, getThought } from '@/lib/data/thoughts';
 import GoBack from '@/components/goback';
 
+export const revalidate = 60;
+
 interface ThoughtPageProps {
   params: Promise<{
     slug: string

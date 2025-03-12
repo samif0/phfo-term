@@ -2,6 +2,8 @@ import Link from 'next/link';
 import GoBack from '@/components/goback';
 import { getAllWritings } from '@/lib/data/writings';
 
+export const revalidate = 60;
+
 export default async function WritingsPage() {
   const writings = await getAllWritings();
   
