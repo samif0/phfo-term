@@ -33,7 +33,6 @@ function calculateSeparation(boid: { x: number; y: number; dx: number; dy: numbe
     if (boid === otherBoid) continue;
 
     if(isNeighbor(boid, otherBoid) && boid.s == otherBoid.s) {
-      const distance = (otherBoid.x - boid.x) + (otherBoid.y - boid.y);
       const separationX = (boid.x - otherBoid.x);
       const separationY = (boid.y - otherBoid.y);
       avgSeparationX += separationX;
