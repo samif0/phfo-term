@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import GoBack from '@/components/goback';
-import { getAllThoughts } from '@/data/thoughts-data';
+import { getAllThoughts } from '@/lib/data/thoughts';
 
 export default async function ThoughtsPage() {
 
-    const thoughts = getAllThoughts()
+    const thoughts = await getAllThoughts()
 
     return (
     <div className="min-h-screen relative">

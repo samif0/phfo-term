@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Thought from '@/components/thought';
-import { getAllThoughts } from '@/data/thoughts-data';
-import { getThought } from '@/data/thoughts-data';
+import { getAllThoughts, getThought } from '@/lib/data/thoughts';
 import GoBack from '@/components/goback';
 
 interface ThoughtPageProps {
@@ -11,8 +10,8 @@ interface ThoughtPageProps {
 }
 
 
-export function generateStaticParams() {
-  const thoughts = getAllThoughts();
+export async function generateStaticParams() {
+  const thoughts = await getAllThoughts();
   
   return thoughts.map((thought) => ({
     slug: thought.slug,
@@ -21,7 +20,7 @@ export function generateStaticParams() {
 
 export default async function ThoughtPage({ params }: ThoughtPageProps) { 
   const awaitedParams = await params;
-  const thoughtData = getThought(awaitedParams.slug);
+  const thoughtData = await getThought(awaitedParams.slug);
   
   if (!thoughtData) {
     notFound();

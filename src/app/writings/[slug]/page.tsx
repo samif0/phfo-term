@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
 import Writing from '@/components/writing';
-import { getAllWritings } from '@/data/writings-data';
-import { getWriting } from '@/data/writings-data';
 import GoBack from '@/components/goback';
+import { getAllWritings, getWriting } from '@/lib/data/writings';
 
 interface WritingPageProps {
   params: Promise<{
@@ -11,8 +10,8 @@ interface WritingPageProps {
 }
 
 
-export function generateStaticParams() {
-  const writings = getAllWritings();
+export async function generateStaticParams() {
+  const writings = await getAllWritings();
   
   return writings.map((writing) => ({
     slug: writing.slug,
@@ -21,7 +20,7 @@ export function generateStaticParams() {
 
 export default async function WritingPage({ params }: WritingPageProps) { 
   const awaitedParams = await params;
-  const writingData = getWriting(awaitedParams.slug);
+  const writingData = await getWriting(awaitedParams.slug);
   
   if (!writingData) {
     notFound();

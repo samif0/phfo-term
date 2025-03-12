@@ -38,7 +38,6 @@ function calculateSeparation(boid: { x: number; y: number; dx: number; dy: numbe
       const separationY = (boid.y - otherBoid.y);
       avgSeparationX += separationX;
       avgSeparationY += separationY;
-      console.log(distance);
       numNeighbors++;
     }
   }

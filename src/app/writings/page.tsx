@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import GoBack from '@/components/goback';
-import { getAllWritings } from '@/data/writings-data';
+import { getAllWritings } from '@/lib/data/writings';
 
 export default async function WritingsPage() {
-  const writings = getAllWritings();
+  const writings = await getAllWritings();
   
   return (
     <div className="min-h-screen relative">
