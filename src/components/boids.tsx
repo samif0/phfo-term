@@ -231,10 +231,6 @@ export default function Boids() {
                 className="fixed top-0 left-0 w-screen h-screen opacity-30"
             />
 
-            {/* Debug Element */}
-            <div className="fixed top-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded shadow-lg z-[9999]">
-              Window Mouse: X={mousePosition.x}, Y={mousePosition.y}
-            </div>
         </div>
         
     );

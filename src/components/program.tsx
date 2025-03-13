@@ -3,14 +3,19 @@ import "./components.css";
 type ProgramProps = {
   content: string;
   videoName?: string;
+  githubUrl?: string;
 }
 
-export default function Program({ content, videoName}: ProgramProps) {
+export default function Program({ content, videoName, githubUrl }: ProgramProps) {
   const videoSrc = `/videos/${videoName}`;
   return (
     <section className="program-section">
       <div className="program-content-wrapper">
-        <p>{content}</p>
+        <div>
+          <p>{content}</p>
+          <a href={githubUrl}> {githubUrl} </a>
+        </div>
+        
         <div className="video-container">
           <div className="video-wrapper">
             <video controls>

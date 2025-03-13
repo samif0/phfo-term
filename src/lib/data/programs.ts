@@ -23,6 +23,7 @@ export async function getAllPrograms(): Promise<ProgramData[]> {
       slug: item.slug,
       content: item.content,
       videoName: item.videoName,
+      githubUrl: item.githubUrl,
     }));
   } catch (error) {
     console.error("Failed to fetch program:", error);
@@ -50,6 +51,7 @@ export async function getProgram(slug: string): Promise<ProgramData | undefined>
       slug: response.Item.slug,
       content: response.Item.content,
       videoName: response.Item.videoName,
+      githubUrl: response.Item.githubUrl,
     };
 
     return ret;

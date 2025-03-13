@@ -16,4 +16,5 @@ export interface ProgramData {
   slug: string;
   content: string;
   videoName?: string; //TODO: move resources from public assets to S3 in the future
+  githubUrl?: string;
 }
