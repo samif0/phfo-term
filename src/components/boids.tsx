@@ -120,7 +120,7 @@ export default function Boids() {
         });
       }
 
-      const handleMouseMove = (e: { clientX: any; clientY: any; }) => {
+      const handleMouseMove = (e: { clientX: number; clientY: number; }) => {
         setMousePosition({ x: e.clientX, y: e.clientY });
       };
       
