@@ -13,7 +13,7 @@ export default async function ProgramsPage() {
         {programs.map((program) => (
           <Link 
             key={program.slug}
-            href={`/program/${program.slug}`} 
+            href={`/programs/${program.slug}`} 
             className="text-white hover:text-gray-300"
           >
             <p>{program.slug}</p>
