@@ -23,6 +23,10 @@ function normalizeVector(vector: {x: number, y: number}) {
   return vector;
 }
 
+function calculateDistance(x1: number, y1: number, x2: number, y2: number) {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
 function calculateSeparation(boid: { x: number; y: number; dx: number; dy: number, s: number; }, boids: { x: number; y: number; dx: number; dy: number, s :number;}[]){
 
   let avgSeparationX = 0;
@@ -96,31 +100,36 @@ export default function Boids() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const boidsRef = useRef<Array<{ x: number; y: number; dx: number; dy: number, s: number}>>([]);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
+
+    const mouseInfluenceRadius = 50;
 
     useEffect(() => {
       if (!canvasRef.current) return;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d')!;
       
-      // Set canvas size to match window dimensions
       dimensions.height = canvas.height;
       dimensions.width = canvas.width;
 
-      function updateDimensions() {
+      const updateDimensions = () => {
         setDimensions({
           width: canvas.width,
           height: canvas.height
         });
       }
+
+      const handleMouseMove = (e: { clientX: any; clientY: any; }) => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+      };
       
       updateDimensions();
       
       window.addEventListener('resize', updateDimensions);
-      
-      // Log to verify dimensions are correct
-      console.log("Canvas dimensions:", canvas.width, canvas.height);
+      window.addEventListener('mousemove', handleMouseMove);
 
+      
       const maxSpeed = 0.5;
  
       const min = -0.05;
@@ -132,10 +141,7 @@ export default function Boids() {
           dx: (Math.random() * max) + (Math.random() * min),
           dy: (Math.random() * max) + (Math.random() * min),
           s:  Math.round(Math.random() * 3)
-        }));
-        
-        // Debug log to verify boid positions
-        console.log("Initial boid positions:", boidsRef.current.slice(0, 10));
+        }));  
       }
   
       const animate = () => {
@@ -150,9 +156,28 @@ export default function Boids() {
           const normAlignment = normalizeVector(alignment);
           const normCohesion = normalizeVector(cohesion);
           
-          const forceX = normSeparation.x * 0.04 + normAlignment.x * 0.05 + normCohesion.x * 0.01;
-          const forceY = normAlignment.y * 0.05 + normCohesion.y * 0.01 + normSeparation.y * 0.04;
+          let forceX = normSeparation.x * 0.04 + normAlignment.x * 0.05 + normCohesion.x * 0.01;
+          let forceY = normAlignment.y * 0.05 + normCohesion.y * 0.01 + normSeparation.y * 0.04;
 
+          const distToMouse = calculateDistance(boid.x, boid.y, mousePosition.x, mousePosition.y);
+
+          if (distToMouse < mouseInfluenceRadius) {
+            // Calculate direction vector from boid to mouse
+            const toMouseX = mousePosition.x - boid.x;
+            const toMouseY = mousePosition.y - boid.y;
+            
+            // Normalize the vector
+            const distFactor = 1 - (distToMouse / mouseInfluenceRadius); // Stronger effect when closer
+            const magnitude = Math.sqrt(toMouseX * toMouseX + toMouseY * toMouseY);
+            
+            if (magnitude > 0) {
+              const normalizedX = toMouseX / magnitude;
+              const normalizedY = toMouseY / magnitude;
+              
+              forceX -= normalizedX * 0.5 * distFactor;
+              forceY -= normalizedY * 0.5 * distFactor;
+            }
+          }
           
           boid.dx += forceX + boid.dx * 0.9995;
           boid.dy += forceY + boid.dy * 0.9995;
@@ -163,18 +188,14 @@ export default function Boids() {
             boid.dy = (boid.dy / speed) * maxSpeed;
           }
 
-          // Ensure minimum speed to avoid stagnation
           const minSpeed = 0.5;
           if (speed < minSpeed && speed > 0) {
             boid.dx = (boid.dx / speed) * minSpeed;
             boid.dy = (boid.dy / speed) * minSpeed;
           }
           
-          // Update position
           boid.x += boid.dx;
           boid.y += boid.dy;
-
-
           
           
           if (boid.x > canvas.width) boid.x = 0;
@@ -207,8 +228,13 @@ export default function Boids() {
             <canvas
                 key="boids-canvas"
                 ref={canvasRef}
-                className="fixed top-0 left-0 w-screen h-screen -z-50 opacity-30"
+                className="fixed top-0 left-0 w-screen h-screen opacity-30"
             />
+
+            {/* Debug Element */}
+            <div className="fixed top-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded shadow-lg z-[9999]">
+              Window Mouse: X={mousePosition.x}, Y={mousePosition.y}
+            </div>
         </div>
         
     );

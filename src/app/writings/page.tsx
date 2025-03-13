@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import GoBack from '@/components/goback';
 import { getAllWritings } from '@/lib/data/writings';
+import Button from '@/components/btn';
+import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 
 export const revalidate = 60;
 
@@ -16,7 +18,7 @@ export default async function WritingsPage() {
             href={`/writings/${writing.slug}`} 
             className="text-white hover:text-gray-300"
           >
-            {writing.title}
+          <Button text={writing.title} variant="outline" size="medium" icon={<ArrowRightIcon className="h-3 w-3" />} iconPosition="right" />
           </Link>
         ))}
       </div>
