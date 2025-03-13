@@ -14,8 +14,6 @@ export function getDocClient() {
       },
     });
 
-    console.log("client:", client);
-
     ddbDocClient = DynamoDBDocumentClient.from(client);
   }
   

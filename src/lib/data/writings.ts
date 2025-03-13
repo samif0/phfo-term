@@ -1,4 +1,3 @@
-// src/lib/data/thoughts.ts
 import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { getDocClient } from '../dynamodb';
 import { WritingData } from "./types";

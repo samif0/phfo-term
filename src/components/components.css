@@ -43,6 +43,10 @@
     text-align: right;
 }
 
+.program-section {
+    margin-bottom: 2rem;
+}
+
 .row {
     display: flex;
 }

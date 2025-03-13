@@ -11,3 +11,8 @@ export interface WritingData {
   content: string;
   date: string;
 }
+
+export interface ProgramData {
+  slug: string;
+  content: string;
+}

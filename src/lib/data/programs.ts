@@ -1,8 +1,8 @@
 import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { getDocClient } from '../dynamodb';
-import { ThoughtData } from "./types";
+import { ProgramData } from "./types";
 
-export async function getAllThoughts(): Promise<ThoughtData[]> {
+export async function getAllPrograms(): Promise<ProgramData[]> {
   const client = getDocClient();
   
   try {
@@ -13,7 +13,7 @@ export async function getAllThoughts(): Promise<ThoughtData[]> {
         "#pk": "{contentType}#{slug}",
       },
       ExpressionAttributeValues: {
-        ":prefix": "thought#",
+        ":prefix": "program#",
       },
     });
     
@@ -22,39 +22,38 @@ export async function getAllThoughts(): Promise<ThoughtData[]> {
     return (response.Items || []).map(item => ({
       slug: item.slug,
       content: item.content,
-      date: item.date,
     }));
   } catch (error) {
-    console.error("Failed to fetch thoughts:", error);
+    console.error("Failed to fetch program:", error);
     return [];
   }
 }
 
-export async function getThought(slug: string): Promise<ThoughtData | undefined> {
+export async function getProgram(slug: string): Promise<ProgramData | undefined> {
   const client = getDocClient();
   
   try {
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       Key: {
-        '{contentType}#{slug}': `thought#${slug}`,
+        '{contentType}#{slug}': `program#${slug}`,
         'metadata': "metadata",
       },
     });
     
     const response = await client.send(command);
+    console.log("single resp: ", response.Item);
     
     if (!response.Item) return undefined;
     
-    const ret : ThoughtData = {
+    const ret : ProgramData = {
       slug: response.Item.slug,
       content: response.Item.content,
-      date: response.Item.date,
     };
 
     return ret;
   } catch (error) {
-    console.error(`Failed to fetch thought ${slug}:`, error);
+    console.error(`Failed to fetch program ${slug}:`, error);
     return undefined;
   }
 }
