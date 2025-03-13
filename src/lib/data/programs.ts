@@ -22,6 +22,7 @@ export async function getAllPrograms(): Promise<ProgramData[]> {
     return (response.Items || []).map(item => ({
       slug: item.slug,
       content: item.content,
+      videoName: item.videoName,
     }));
   } catch (error) {
     console.error("Failed to fetch program:", error);
@@ -42,13 +43,13 @@ export async function getProgram(slug: string): Promise<ProgramData | undefined>
     });
     
     const response = await client.send(command);
-    console.log("single resp: ", response.Item);
     
     if (!response.Item) return undefined;
     
     const ret : ProgramData = {
       slug: response.Item.slug,
       content: response.Item.content,
+      videoName: response.Item.videoName,
     };
 
     return ret;

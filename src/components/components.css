@@ -43,8 +43,64 @@
     text-align: right;
 }
 
+
+/* Add these styles to your components.css file */
+
 .program-section {
-    margin-bottom: 2rem;
+    margin: 2rem 0;
+}
+  
+.program-content-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+  
+.program-content-wrapper p {
+    width: 100%;
+    margin-bottom: 1rem;
+    text-align: center;
+    z-index: 1;
+}
+  
+.video-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background-color: #000;
+    width: 60%; /* Smaller video size */
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+  
+.video-wrapper {
+    aspect-ratio: 16 / 9; /* Adjust if your video has a different aspect ratio */
+    width: 100%;
+    position: relative;
+}
+  
+.video-wrapper video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Use 'cover' if you want to fill the container completely */
+}
+  
+  /* Make sure the controls remain visible and usable */
+.video-wrapper video::-webkit-media-controls {
+    z-index: 2;
+}
+  
+  /* Responsive adjustments */
+@media (max-width: 768px) {
+    .video-container {
+      width: 80%;
+    }
 }
 
 .row {

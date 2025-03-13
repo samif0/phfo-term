@@ -17,7 +17,7 @@ export default async function ThoughtsPage() {
             href={`/thoughts/${thought.slug}`} 
             className="text-white hover:text-gray-300"
           >
-            {thought.date}
+            {thought.slug} - {thought.date}
           </Link>
         ))}
       </div>

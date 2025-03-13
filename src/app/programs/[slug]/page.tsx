@@ -30,7 +30,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
 
   return (
     <div>
-      <Program content={programData.content} />
+      <Program content={programData.content} videoName={programData.videoName} />
       <GoBack />
     </div>
   )
