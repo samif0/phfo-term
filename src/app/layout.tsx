@@ -1,7 +1,8 @@
+
 import type { Metadata, Viewport } from "next";
-import Boids from "@/components/boids";
 import localFont from "next/font/local";
 import "./globals.css";
+import Boids from "@/components/boids";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
   },
 };
+
 
 
 const deptnf = localFont({ src: "../../public/DepartureMonoNerdFontMono-Regular.otf" });
@@ -33,7 +35,8 @@ export default function RootLayout({
       </head>
       <body className={`${deptnf.className} min-h-screen bg-black text-white antialiased`}>
         <main className="flex min-h-screen flex-col">
-          <Boids/>
+          <Boids />
+
           {children}
         </main>
       </body>
