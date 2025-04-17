@@ -468,7 +468,7 @@ export default function Boids() {
         */
 
         const frameEnd = performance.now();
-        // @ts-expect-error
+        // @ts-expect-error __lastBoidFrameTime is not defined in the global scope
         window.__lastBoidFrameTime = frameEnd - frameStart;
         requestAnimationFrame(animate);
 

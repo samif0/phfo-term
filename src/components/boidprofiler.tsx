@@ -6,7 +6,7 @@ export default function BoidProfiler() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      // @ts-expect-error
+      // @ts-expect-error __lastBoidFrameTime is not defined in the global scope
       const t = window.__lastBoidFrameTime;
       if (typeof t === 'number') setFrameTime(t);
     }, 500);
