@@ -11,7 +11,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Sami F",
+  title: "sami. f",
   description: "Personal website of Sami F",
   icons: {
     icon: "/favicon.ico",
