@@ -3,6 +3,10 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
+// performance constants
+const NEIGHBOR_RADIUS = 50;
+const NEIGHBOR_RADIUS_SQ = NEIGHBOR_RADIUS * NEIGHBOR_RADIUS;
+
 function getWordPointCloud(text: string, fontSize = 500, density = 9) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -38,13 +42,9 @@ function getWordPointCloud(text: string, fontSize = 500, density = 9) {
 
 function isNeighbor(boid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty: number}, 
   otherBoid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty: number } ){
-  const distance = Math.sqrt(Math.pow(otherBoid.x - boid.x, 2) + Math.pow(otherBoid.y - boid.y, 2));
-
-  if(distance < 50){
-    return true;
-  } else {
-    return false;
-  }
+  const dx = otherBoid.x - boid.x;
+  const dy = otherBoid.y - boid.y;
+  return dx * dx + dy * dy < NEIGHBOR_RADIUS_SQ;
 }
 
 function normalizeVector(vector: {x: number, y: number}) {
@@ -163,6 +163,12 @@ export default function Boids() {
       }
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d')!;
+      const cellSize = 100;
+      const MAX_NEIGHBORS = 10;
+      const neighborRadiusSq = 50 * 50;
+      let cols = 0;
+      let rows = 0;
+      let grid: number[][] = [];
 
       //on remount clear hover target
       hoverTargetRef.current = null;
@@ -182,7 +188,7 @@ export default function Boids() {
             targetsPointRef.current = getWordPointCloud("sami. f", 200, 7);
             updated = true;
         } else if(isScreenSize('large')) {
-            targetsPointRef.current = getWordPointCloud("sami. f", 350, 9);
+            targetsPointRef.current = getWordPointCloud("sami. f", 800, 15);
             updated = true;
         }
 
@@ -284,41 +290,77 @@ export default function Boids() {
       }
   
       const animate = () => {
+        const frameStart = performance.now();
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // reuse grid array to avoid allocations
+        const neededCols = Math.ceil(canvas.width / cellSize);
+        const neededRows = Math.ceil(canvas.height / cellSize);
+        if (grid.length !== neededCols * neededRows) {
+          cols = neededCols;
+          rows = neededRows;
+          grid = Array(cols * rows).fill(null).map(() => []);
+        } else {
+          grid.forEach(cell => { cell.length = 0; });
+        }
+         boidsRef.current.forEach((b, i) => {
+           const xCell = Math.floor(b.x / cellSize);
+           const yCell = Math.floor(b.y / cellSize);
+           if (xCell >= 0 && xCell < cols && yCell >= 0 && yCell < rows) {
+             grid[yCell * cols + xCell].push(i);
+           }
+         });
+
+         boidsRef.current.forEach((boid, index) => {
+           const xCell = Math.floor(boid.x / cellSize);
+           const yCell = Math.floor(boid.y / cellSize);
+           const localIndices: number[] = [];
+           for (let dx = -1; dx <= 1; dx++) {
+             for (let dy = -1; dy <= 1; dy++) {
+               const nx = xCell + dx;
+               const ny = yCell + dy;
+               if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                 localIndices.push(...grid[ny * cols + nx]);
+               }
+             }
+           }
+           const neighbors = localIndices
+             .map(i => boidsRef.current[i])
+             .filter(o => o !== boid && boid.s === o.s && isNeighbor(boid, o));
+           if (neighbors.length > MAX_NEIGHBORS) neighbors.length = MAX_NEIGHBORS;
+
+          const separation = calculateSeparation(boid, neighbors);
+          const alignment = calculateAlignment(boid, neighbors);
+          const cohesion = calculateCohesion(boid, neighbors);
+
+          const target = hoverTargetRef.current || { x: boid.tx, y: boid.ty };
+          const toTargetX = target.x - boid.x;
+          const toTargetY = target.y - boid.y;
+          const distSq = toTargetX * toTargetX + toTargetY * toTargetY;
+          const epsSq = 0.5 * 0.5;;
+
+          let targetForceX = 0;
+          let targetForceY = 0;
+
+          if (distSq > epsSq) {
+                const distToTarget = Math.sqrt(distSq);
+
+                if (distToTarget > 0 && Number.isFinite(distToTarget)) {
+                    const invDist = 3.0 / distToTarget;
+                    targetForceX = toTargetX * invDist;
+                    targetForceY = toTargetY * invDist;
+
+                    if (isNaN(targetForceX) || isNaN(targetForceY)) {
+                        console.error(`NaN detected AFTER normalization for Boid ${index}`, { boid, toTargetX, toTargetY, distToTarget, invDist });
+                        targetForceX = 0;
+                        targetForceY = 0;
+                    }
+                } else {
+                    console.warn(`Invalid distToTarget (${distToTarget}) for Boid ${index} despite distSq > epsSq`, { boid, distSq });
+                }
+            }
        
-        
-        boidsRef.current.forEach((boid, index) => {
-        const target = hoverTargetRef.current || { x: boid.tx, y: boid.ty };
-        const toTargetX = target.x - boid.x;
-        const toTargetY = target.y - boid.y;
-        const distSq = toTargetX * toTargetX + toTargetY * toTargetY;
-        const epsSq = 0.5 * 0.5;;
-
-        let targetForceX = 0;
-        let targetForceY = 0;
-
-        if (distSq > epsSq) {
-              const distToTarget = Math.sqrt(distSq);
-
-              if (distToTarget > 0 && Number.isFinite(distToTarget)) {
-                  const invDist = 3.0 / distToTarget;
-                  targetForceX = toTargetX * invDist;
-                  targetForceY = toTargetY * invDist;
-
-                  if (isNaN(targetForceX) || isNaN(targetForceY)) {
-                      console.error(`NaN detected AFTER normalization for Boid ${index}`, { boid, toTargetX, toTargetY, distToTarget, invDist });
-                      targetForceX = 0;
-                      targetForceY = 0;
-                  }
-              } else {
-                  console.warn(`Invalid distToTarget (${distToTarget}) for Boid ${index} despite distSq > epsSq`, { boid, distSq });
-              }
-          }
-     
-          const separation = calculateSeparation(boid, boidsRef.current);
-          const alignment = calculateAlignment(boid, boidsRef.current);
-          const cohesion = calculateCohesion(boid, boidsRef.current);
-          
           const separationWeight = 0.03;
           const alignmentWeight = 0.005;
           const cohesionWeight = 0.015;
@@ -425,6 +467,9 @@ export default function Boids() {
         }
         */
 
+        const frameEnd = performance.now();
+        // @ts-ignore
+        window.__lastBoidFrameTime = frameEnd - frameStart;
         requestAnimationFrame(animate);
 
       };

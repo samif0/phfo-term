@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Boids from "@/components/boids";
+import BoidProfiler from "@/components/boidprofiler";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -38,6 +39,7 @@ export default function RootLayout({
           <Boids />
 
           {children}
+          <BoidProfiler />
         </main>
       </body>
     </html>
