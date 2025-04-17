@@ -9,7 +9,7 @@ export default function Home() {
         <div>
           <h1 className="text-3xl font-semibold text-gray-400">hello.</h1>
           <h2 className="mt-2 text-2xl text-gray-600">
-          software engineer @ AWS | RPI CS \'23
+          software engineer @ AWS | RPI CS &apos;23
           
           </h2> 
           
