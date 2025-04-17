@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
 function getWordPointCloud(text: string, fontSize = 500, density = 9) {
@@ -148,9 +149,13 @@ export default function Boids() {
     const boidsRef = useRef<Array<{ x: number; y: number; dx: number; dy: number, s: number, tx: number, ty: number}>>([]);
     const mousePositionRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 });
     const targetsPointRef = useRef<{ x: number; y: number }[]>([]);
-    
+    const hoverTargetRef = useRef<{ x: number; y: number } | null>(null); 
 
     const mouseInfluenceRadius = 300;
+
+
+    //to reload boid + button animation to reattach listeners
+    const pathname = usePathname();
 
     useEffect(() => {
       if (!canvasRef.current){
@@ -225,8 +230,27 @@ export default function Boids() {
       window.addEventListener('resize', resizeCanvas);
       window.addEventListener('mousemove', handleMouseMove);
 
+      const buttons = Array.from(document.querySelectorAll('.mono-button')) as HTMLElement[];
+      const onEnter = (e: MouseEvent) => {
+        const btn = e.currentTarget as HTMLElement;
+        const rect = btn.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / canvasRect.width;
+        const scaleY = canvas.height / canvasRect.height;
+        hoverTargetRef.current = {
+          x: (rect.left + rect.width / 2 - canvasRect.left) * scaleX,
+          y: (rect.top + rect.height / 2 - canvasRect.top) * scaleY
+        };
+      };
       
-      const maxSpeed = 4;
+      const onLeave = () => { hoverTargetRef.current = null; };
+
+      buttons.forEach((button) => {
+        button.addEventListener('mouseenter', onEnter);
+        button.addEventListener('mouseleave', onLeave);
+      });
+      
+      const maxSpeed = 3;
  
       const min = -1;
       const max = 1;
@@ -261,8 +285,9 @@ export default function Boids() {
        
         
         boidsRef.current.forEach((boid, index) => {
-        const toTargetX = boid.tx - boid.x;
-        const toTargetY = boid.ty - boid.y;
+        const target = hoverTargetRef.current || { x: boid.tx, y: boid.ty };
+        const toTargetX = target.x - boid.x;
+        const toTargetY = target.y - boid.y;
         const distSq = toTargetX * toTargetX + toTargetY * toTargetY;
         const epsSq = 0.5 * 0.5;;
 
@@ -403,9 +428,18 @@ export default function Boids() {
  
       animate();
 
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+        window.removeEventListener('mousemove', handleMouseMove);
+        buttons.forEach((button) => {
+          button.removeEventListener('mouseenter', onEnter);
+          button.removeEventListener('mouseleave', onLeave);
+        });
+      }
+
       
       
-    }, []);
+    }, [pathname]);
   
     return (
         <div>
