@@ -468,7 +468,7 @@ export default function Boids() {
         */
 
         const frameEnd = performance.now();
-        // @ts-ignore
+        // @ts-expect-error
         window.__lastBoidFrameTime = frameEnd - frameStart;
         requestAnimationFrame(animate);
 

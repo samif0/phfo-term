@@ -6,7 +6,7 @@ export default function BoidProfiler() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      // @ts-ignore
+      // @ts-expect-error
       const t = window.__lastBoidFrameTime;
       if (typeof t === 'number') setFrameTime(t);
     }, 500);
