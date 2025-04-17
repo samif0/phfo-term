@@ -57,6 +57,19 @@ function normalizeVector(vector: {x: number, y: number}) {
   return vector;
 }
 
+function isScreenSize(size: 'small' | 'medium' | 'large'): boolean {
+  const width = window.innerWidth;
+
+  if (size === 'small') {
+    return width <= 768;
+  } else if (size === 'medium') {
+    return width > 768 && width <= 1200;
+  } else if (size === 'large') {
+    return width > 1200;
+  }
+  return false;
+}
+
 
 function calculateSeparation(boid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty:number },
    boids: { x: number; y: number; dx: number; dy: number, s :number, tx: number, ty: number}[]){
@@ -151,6 +164,42 @@ export default function Boids() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         console.log(`Canvas resized to: ${canvas.width}x${canvas.height}`);
+        
+        let updated = false;
+
+        if(isScreenSize('small')) {
+            targetsPointRef.current = getWordPointCloud("sami. f", 100, 5);
+            updated = true;
+        } else if(isScreenSize('medium')) {
+            targetsPointRef.current = getWordPointCloud("sami. f", 200, 7);
+            updated = true;
+        } else if(isScreenSize('large')) {
+            targetsPointRef.current = getWordPointCloud("sami. f", 350, 9);
+            updated = true;
+        }
+
+
+        if(updated) {
+          const min = -1;
+          const max = 1;
+          boidsRef.current = Array(targetsPointRef.current.length).fill(null).map((_, i) => {
+            const tps = targetsPointRef.current[i];
+    
+            const calculatedTx = tps.x;
+            const calculatedTy = tps.y;
+
+            return {
+                
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                dx: (Math.random() * max) + (Math.random() * min),
+                dy: (Math.random() * max) + (Math.random() * min),
+                s: Math.round(Math.random() * 3),
+                tx: calculatedTx,
+                ty: calculatedTy
+            };
+          });
+        }
 
         if (targetsPointRef.current.length > 0) {
             boidsRef.current.forEach((boid, i) => {
@@ -177,8 +226,6 @@ export default function Boids() {
       window.addEventListener('mousemove', handleMouseMove);
 
       
-      targetsPointRef.current = getWordPointCloud("sami. f");
-
       const maxSpeed = 4;
  
       const min = -1;
