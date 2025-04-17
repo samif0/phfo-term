@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 function getWordPointCloud(text: string, fontSize = 500, density = 9) {
   const canvas = document.createElement('canvas');
@@ -57,9 +57,6 @@ function normalizeVector(vector: {x: number, y: number}) {
   return vector;
 }
 
-function calculateDistance(x1: number, y1: number, x2: number, y2: number) {
-  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-}
 
 function calculateSeparation(boid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty:number },
    boids: { x: number; y: number; dx: number; dy: number, s :number, tx: number, ty: number}[]){
@@ -274,13 +271,13 @@ export default function Boids() {
                }
           }
           
-          let forceX = (normSeparation.x * separationWeight) 
+          const forceX = (normSeparation.x * separationWeight) 
           + (normAlignment.x * alignmentWeight) 
           + (normCohesion.x * cohesionWeight) 
           + (targetForceX * targetWeight)
           + (mouseForceX * mouseWeight);
           
-          let forceY = (normSeparation.y * separationWeight) 
+          const forceY = (normSeparation.y * separationWeight) 
           + (normAlignment.y * alignmentWeight) 
           + (normCohesion.y * cohesionWeight) 
           + (targetForceY * targetWeight)

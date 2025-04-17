@@ -1,4 +1,3 @@
-import Boids from '@/components/boids';
 import Button from '@/components/btn';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
