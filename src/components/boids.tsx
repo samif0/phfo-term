@@ -164,6 +164,9 @@ export default function Boids() {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d')!;
 
+      //on remount clear hover target
+      hoverTargetRef.current = null;
+
       
       const resizeCanvas = () => {
         canvas.width = window.innerWidth;
