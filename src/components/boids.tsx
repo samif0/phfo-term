@@ -165,7 +165,6 @@ export default function Boids() {
       const ctx = canvas.getContext('2d')!;
       const cellSize = 100;
       const MAX_NEIGHBORS = 10;
-      const neighborRadiusSq = 50 * 50;
       let cols = 0;
       let rows = 0;
       let grid: number[][] = [];
