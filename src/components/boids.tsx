@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
 // performance constants
-const NEIGHBOR_RADIUS = 50;
+const NEIGHBOR_RADIUS = 15;
 const NEIGHBOR_RADIUS_SQ = NEIGHBOR_RADIUS * NEIGHBOR_RADIUS;
 
 function getWordPointCloud(text: string, fontSize = 500, density = 9) {
@@ -151,7 +151,7 @@ export default function Boids() {
     const targetsPointRef = useRef<{ x: number; y: number }[]>([]);
     const hoverTargetRef = useRef<{ x: number; y: number } | null>(null); 
 
-    const mouseInfluenceRadius = 300;
+    const mouseInfluenceRadius = 350;
 
 
     //to reload boid + button animation to reattach listeners
@@ -164,7 +164,7 @@ export default function Boids() {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d')!;
       const cellSize = 100;
-      const MAX_NEIGHBORS = 10;
+      const MAX_NEIGHBORS = 3;
       let cols = 0;
       let rows = 0;
       let grid: number[][] = [];
@@ -187,7 +187,7 @@ export default function Boids() {
             targetsPointRef.current = getWordPointCloud("sami. f", 200, 7);
             updated = true;
         } else if(isScreenSize('large')) {
-            targetsPointRef.current = getWordPointCloud("sami. f", 800, 15);
+            targetsPointRef.current = getWordPointCloud("sami. f", 350, 8);
             updated = true;
         }
 
@@ -259,41 +259,20 @@ export default function Boids() {
       });
       
       const maxSpeed = 3;
- 
-      const min = -1;
-      const max = 1;
-      if (boidsRef.current.length === 0 && targetsPointRef.current.length > 0) {
-        if (!canvas || canvas.width <= 0 || canvas.height <= 0) {
-            console.error("Canvas dimensions invalid during boid init!", canvas?.width, canvas?.height);
-        } else {
-            boidsRef.current = Array(targetsPointRef.current.length).fill(null).map((_, i) => {
-                const tps = targetsPointRef.current[i];
-        
-                 const calculatedTx = tps.x;
-                 const calculatedTy = tps.y;
-
-                return {
-                    
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    dx: (Math.random() * max) + (Math.random() * min),
-                    dy: (Math.random() * max) + (Math.random() * min),
-                    s: Math.round(Math.random() * 3),
-                    tx: calculatedTx,
-                    ty: calculatedTy
-                };
-            });
+      let lastFrameTime = performance.now();
+      const animate = (timestamp: number) => {
+        // throttle @ 45 fps
+        const throttle = 45;
+        const delta = timestamp - lastFrameTime;
+        if (delta < 1000 / throttle) {
+          requestAnimationFrame(animate);
+          return;
         }
-      } else if (boidsRef.current.length === 0) {
-        console.warn("Skipping boid initialization: No target points available.");
-      }
-  
-      const animate = () => {
-        const frameStart = performance.now();
+        lastFrameTime = timestamp;
+        const frameStart = timestamp;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // reuse grid array to avoid allocations
         const neededCols = Math.ceil(canvas.width / cellSize);
         const neededRows = Math.ceil(canvas.height / cellSize);
         if (grid.length !== neededCols * neededRows) {
@@ -346,7 +325,7 @@ export default function Boids() {
                 const distToTarget = Math.sqrt(distSq);
 
                 if (distToTarget > 0 && Number.isFinite(distToTarget)) {
-                    const invDist = 3.0 / distToTarget;
+                    const invDist = 2.0 / distToTarget;
                     targetForceX = toTargetX * invDist;
                     targetForceY = toTargetY * invDist;
 
@@ -360,10 +339,10 @@ export default function Boids() {
                 }
             }
        
-          const separationWeight = 0.03;
+          const separationWeight = 0.1;
           const alignmentWeight = 0.005;
-          const cohesionWeight = 0.015;
-          const targetWeight = 0.8;
+          const cohesionWeight = 0.03;
+          const targetWeight = 0.4;
           const mouseWeight = 3;
 
           const normSeparation = normalizeVector(separation);
@@ -401,8 +380,8 @@ export default function Boids() {
           
 
 
-          const forceMultiplier = 0.3;
-          const damping = 0.90;
+          const forceMultiplier = 0.2;
+          const damping = 0.95;
 
           boid.dx += forceX * forceMultiplier;
           boid.dy += forceY * forceMultiplier;
@@ -473,7 +452,7 @@ export default function Boids() {
 
       };
  
-      animate();
+      requestAnimationFrame(animate);
 
       return () => {
         window.removeEventListener('resize', resizeCanvas);
