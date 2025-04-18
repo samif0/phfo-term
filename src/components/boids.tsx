@@ -16,7 +16,6 @@ async function getImagePointCloud(src: string, density = 9) {
   if (imageCloudCache.has(cacheKey)) {
     return imageCloudCache.get(cacheKey)!;
   }
-  // load image asset
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -46,7 +45,6 @@ async function getImagePointCloud(src: string, density = 9) {
     }
   }
   imageCloudCache.set(cacheKey, points);
-  console.log(`Image ${src} → ${points.length} pts at density ${density}`);
   return points;
 }
 
@@ -235,77 +233,53 @@ export default function Boids() {
         console.log(`resizeCanvas for route: ${route}, screen: ${canvas.width}x${canvas.height}`);
 
         let updated = false;
-        const wordD = { small: 8, medium: 12, large: 20 };
+        const wordD = { small: 8, medium: 12, large: 15 };
         const imgD = { small: 8, medium: 12, large: 15 };
         const imgSrc = imageMap[route as '/writings' | '/thoughts' | '/programs'];
 
-        if (isScreenSize('small')) {
+        const MAX_IMG_POINTS = 2000;
+        async function loadTargetsForSize(
+          imgSrc: string | undefined,
+          imgDensity: number,
+          wordFontSize: number,
+          wordDensity: number
+        ) {
           if (imgSrc) {
             try {
-              targetsPointRef.current = await getImagePointCloud(imgSrc, imgD.small);
-              console.log('Loaded image targets:', targetsPointRef.current.length);
-              // cap points
-              const MAX_IMG_POINTS = 2000;
-              if (targetsPointRef.current.length > MAX_IMG_POINTS) {
-                targetsPointRef.current = targetsPointRef.current.filter((_, i) => i % Math.ceil(targetsPointRef.current.length / MAX_IMG_POINTS) === 0);
-                console.log('Capped image targets to:', targetsPointRef.current.length);
+              let pts = await getImagePointCloud(imgSrc, imgDensity);
+              if (pts.length > MAX_IMG_POINTS) {
+                pts = pts.filter((_, i) => i % Math.ceil(pts.length / MAX_IMG_POINTS) === 0);
               }
+              return pts;
             } catch (err) {
               console.error('Failed to load image point cloud', err);
-              targetsPointRef.current = getWordPointCloud("sami. f", 100, wordD.small);
-              console.log('Fallback word targets:', targetsPointRef.current.length);
+              return getWordPointCloud("sami. f", wordFontSize, wordDensity);
             }
-          } else {
-            targetsPointRef.current = getWordPointCloud("sami. f", 100, wordD.small);
-            console.log('Word targets (no imgSrc):', targetsPointRef.current.length);
           }
-          updated = true;
-        } else if (isScreenSize('medium')) {
-          if (imgSrc) {
-            try {
-              targetsPointRef.current = await getImagePointCloud(imgSrc, imgD.medium);
-              console.log('Loaded image targets:', targetsPointRef.current.length);
-              // cap points
-              const MAX_IMG_POINTS = 2000;
-              if (targetsPointRef.current.length > MAX_IMG_POINTS) {
-                targetsPointRef.current = targetsPointRef.current.filter((_, i) => i % Math.ceil(targetsPointRef.current.length / MAX_IMG_POINTS) === 0);
-                console.log('Capped image targets to:', targetsPointRef.current.length);
-              }
-            } catch (err) {
-              console.error('Failed to load image point cloud', err);
-              targetsPointRef.current = getWordPointCloud("sami. f", 200, wordD.medium);
-              console.log('Fallback word targets:', targetsPointRef.current.length);
-            }
-          } else {
-            targetsPointRef.current = getWordPointCloud("sami. f", 200, wordD.medium);
-            console.log('Word targets (no imgSrc):', targetsPointRef.current.length);
-          }
-          updated = true;
-        } else if (isScreenSize('large')) {
-          if (imgSrc) {
-            try {
-              targetsPointRef.current = await getImagePointCloud(imgSrc, imgD.large);
-              console.log('Loaded image targets:', targetsPointRef.current.length);
-              // cap points
-              const MAX_IMG_POINTS = 2000;
-              if (targetsPointRef.current.length > MAX_IMG_POINTS) {
-                targetsPointRef.current = targetsPointRef.current.filter((_, i) => i % Math.ceil(targetsPointRef.current.length / MAX_IMG_POINTS) === 0);
-                console.log('Capped image targets to:', targetsPointRef.current.length);
-              }
-            } catch (err) {
-              console.error('Failed to load image point cloud', err);
-              targetsPointRef.current = getWordPointCloud("sami. f", 800, wordD.large);
-              console.log('Fallback word targets:', targetsPointRef.current.length);
-            }
-          } else {
-            targetsPointRef.current = getWordPointCloud("sami. f", 800, wordD.large);
-            console.log('Word targets (no imgSrc):', targetsPointRef.current.length);
-          }
+          return getWordPointCloud("sami. f", wordFontSize, wordDensity);
+        }
+
+        const sizeConfigs = {
+          small: { imgDensity: imgD.small, wordFontSize: 100, wordDensity: wordD.small },
+          medium: { imgDensity: imgD.medium, wordFontSize: 200, wordDensity: wordD.medium },
+          large: { imgDensity: imgD.large, wordFontSize: 500, wordDensity: wordD.large },
+        };
+
+        const sizeKey = isScreenSize('small')
+          ? 'small'
+          : isScreenSize('medium')
+            ? 'medium'
+            : isScreenSize('large')
+              ? 'large'
+              : null;
+
+        if (sizeKey) {
+          const cfg = sizeConfigs[sizeKey];
+          targetsPointRef.current = await loadTargetsForSize(imgSrc, cfg.imgDensity, cfg.wordFontSize, cfg.wordDensity);
           updated = true;
         }
 
         if(updated) {
-          console.log('Initializing boids count:', targetsPointRef.current.length);
           const min = -1;
           const max = 1;
           boidsRef.current = Array(targetsPointRef.current.length).fill(null).map((_, i) => {
@@ -336,7 +310,6 @@ export default function Boids() {
         }
       };
 
-      // debounce resize to avoid repeated expensive recompute
       let resizeTimer: NodeJS.Timeout;
       const debouncedResize = () => {
         clearTimeout(resizeTimer);
@@ -367,6 +340,7 @@ export default function Boids() {
       
       const maxSpeed = 3;
       let lastFrameTime = performance.now();
+      const neighborListPool: number[][] = [];
       const animate = (timestamp: number) => {
         // throttle @ 30 fps
         const throttle = 30;
@@ -400,20 +374,22 @@ export default function Boids() {
          boidsRef.current.forEach((boid, index) => {
            const xCell = Math.floor(boid.x / cellSize);
            const yCell = Math.floor(boid.y / cellSize);
-           const localIndices: number[] = [];
-           for (let dx = -1; dx <= 1; dx++) {
-             for (let dy = -1; dy <= 1; dy++) {
-               const nx = xCell + dx;
-               const ny = yCell + dy;
-               if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
-                 localIndices.push(...grid[ny * cols + nx]);
-               }
-             }
-           }
-           const neighbors = localIndices
-             .map(i => boidsRef.current[i])
-             .filter(o => o !== boid && boid.s === o.s && isNeighbor(boid, o));
-           if (neighbors.length > MAX_NEIGHBORS) neighbors.length = MAX_NEIGHBORS;
+           const localIndices = neighborListPool.pop() || [];
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                const nx = xCell + dx;
+                const ny = yCell + dy;
+                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                  localIndices.push(...grid[ny * cols + nx]);
+                }
+              }
+            }
+            const neighbors = localIndices
+              .map(i => boidsRef.current[i])
+              .filter(o => o !== boid && boid.s === o.s && isNeighbor(boid, o));
+            if (neighbors.length > MAX_NEIGHBORS) neighbors.length = MAX_NEIGHBORS;
+            localIndices.length = 0;
+            neighborListPool.push(localIndices);
 
           const separation = calculateSeparation(boid, neighbors);
           const alignment = calculateAlignment(boid, neighbors);
@@ -558,7 +534,7 @@ export default function Boids() {
         requestAnimationFrame(animate);
 
       };
-      // initial load and start loop (after animate is defined)
+      // initial load and start loop
       (async () => {
         await resizeCanvas();
         requestAnimationFrame(animate);

@@ -16,15 +16,37 @@
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 1rem;
-    text-align: right;
+    text-align: center;
 }
 
 .writing-section {
     margin-bottom: 2rem;
+    /* Restrict to left third of viewport */
+    width: 33vw;
+    max-width: 600px;
+    /* align block to left portion */
+    margin: 0 auto 2rem 0;
+    text-align: left;
+}
+
+.writing-text {
+    text-align: left;
+    margin-bottom: 1rem;
+    margin-left: 1rem;
 }
 
 .thought-section {
     margin-bottom: 2rem;
+    width: 33vw;
+    max-width: 600px;
+    margin: 0 auto 2rem 0;
+    text-align: left;
+}
+
+.thought-text {
+    text-align: left;
+    margin-bottom: 1rem;
+    margin-left: 1rem;
 }
 
 .writing-date {
@@ -32,7 +54,7 @@
     font-size: 0.9rem;
     color: var(--foreground);
     margin-bottom: 1rem;
-    text-align: right;
+    text-align: left;
 }
 
 .thought-date {
@@ -40,25 +62,29 @@
     font-size: 0.9rem;
     color: var(--foreground);
     margin-bottom: 1rem;
-    text-align: right;
+    text-align: left;
 }
-
 
 .program-section {
     margin: 2rem 0;
+    width: 33vw;
+    max-width: 600px;
+    margin: 2rem auto 2rem 0;
+    text-align: left;
 }
   
 .program-content-wrapper {
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
 }
   
 .program-content-wrapper p {
     width: 100%;
     margin-bottom: 1rem;
-    text-align: center;
+    text-align: left;
+    margin-left: 1rem;
     z-index: 1;
 }
   
