@@ -67,7 +67,7 @@
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     background-color: #000;
-    width: 60%; /* Smaller video size */
+    width: 60%; 
     max-width: 500px;
     margin: 0 auto;
     position: relative;
@@ -75,7 +75,7 @@
 }
   
 .video-wrapper {
-    aspect-ratio: 16 / 9; /* Adjust if your video has a different aspect ratio */
+    aspect-ratio: 16 / 9;
     width: 100%;
     position: relative;
 }
@@ -123,26 +123,27 @@
     border: 1px solid transparent;
   }
   
-  /* Size variants */
   .mono-button--small {
     font-size: 14px;
     padding: 8px 16px;
-    height: 36px;
+    min-height: 36px;
+    height: auto;
   }
   
   .mono-button--medium {
     font-size: 16px;
     padding: 10px 20px;
-    height: 42px;
+    min-height: 42px;
+    height: auto;
   }
   
   .mono-button--large {
     font-size: 18px;
     padding: 12px 24px;
-    height: 52px;
+    min-height: 52px;
+    height: auto;
   }
   
-  /* Style variants */
   .mono-button--primary {
     background-color: #1a1a1a;
     color: #ffffff;
@@ -209,14 +210,12 @@
     transform: translateY(0);
   }
   
-  /* Disabled state */
   .mono-button--disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
   }
   
-  /* Icon positioning */
   .mono-button__icon {
     display: flex;
     align-items: center;
@@ -235,7 +234,6 @@
     color: white;
   }
   
-  /* Animation effects */
   .mono-button::after {
     content: '';
     position: absolute;
@@ -258,15 +256,29 @@
     transition: 0s;
   }
   
-  /* Focus state - for accessibility */
   .mono-button:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.2);
   }
   
-  /* Optional modern hover effect */
   @media (hover: hover) {
     .mono-button:hover {
       transform: translateY(-2px);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .mono-button {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
+      flex-direction: column;
+    }
+    .mono-button__icon--left,
+    .mono-button__icon--right {
+      margin: 0;
+    }
+    .mono-button__text {
+      margin-bottom: 0.5rem;
     }
   }

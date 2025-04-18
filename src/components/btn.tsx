@@ -2,7 +2,7 @@ import React from 'react';
 import './components.css';
 
 type ButtonProps = {
-  text: string;
+  text: React.ReactNode;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'small' | 'medium' | 'large';

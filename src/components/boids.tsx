@@ -1,16 +1,58 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 
 // performance constants
 const NEIGHBOR_RADIUS = 15;
 const NEIGHBOR_RADIUS_SQ = NEIGHBOR_RADIUS * NEIGHBOR_RADIUS;
 
+// cache for image point clouds by src|density
+const imageCloudCache = new Map<string, { x: number; y: number }[]>();
+
+
+async function getImagePointCloud(src: string, density = 9) {
+  const cacheKey = `${src}|${density}`;
+  if (imageCloudCache.has(cacheKey)) {
+    return imageCloudCache.get(cacheKey)!;
+  }
+  // load image asset
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+  const sw = window.innerWidth;
+  const sh = window.innerHeight;
+  const iw = image.width;
+  const ih = image.height;
+  const scale = Math.min(sw / iw / 1.25, sh / ih / 1.25);
+  const dw = iw * scale;
+  const dh = ih * scale;
+  const dx = (sw - dw) / 2;
+  const dy = (sh - dh) / 2;
+  const off = document.createElement('canvas');
+  off.width = sw; off.height = sh;
+  const octx = off.getContext('2d')!;
+  octx.drawImage(image, dx, dy, dw, dh);
+  const data = octx.getImageData(0, 0, sw, sh).data;
+  const points: { x: number; y: number }[] = [];
+  for (let y = 0; y < sh; y += density) {
+    for (let x = 0; x < sw; x += density) {
+      if (data[(y * sw + x) * 4 + 3] > 128) {
+        points.push({ x, y });
+      }
+    }
+  }
+  imageCloudCache.set(cacheKey, points);
+  console.log(`Image ${src} → ${points.length} pts at density ${density}`);
+  return points;
+}
+
 function getWordPointCloud(text: string, fontSize = 500, density = 9) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  console.log("reached");
   if (!ctx) {
     throw new Error('Failed to get 2D context');
   }
@@ -151,6 +193,11 @@ export default function Boids() {
     const targetsPointRef = useRef<{ x: number; y: number }[]>([]);
     const hoverTargetRef = useRef<{ x: number; y: number } | null>(null); 
 
+    const imageMap = useMemo(() => ({
+      '/writings': '/images/writing-img.svg',
+      '/thoughts': '/images/thought-img.svg',
+      '/programs': '/images/programs-img.svg',
+    }), []);
     const mouseInfluenceRadius = 350;
 
 
@@ -172,27 +219,93 @@ export default function Boids() {
       //on remount clear hover target
       hoverTargetRef.current = null;
 
+      const route = pathname.replace(/\/$/, '');
+      const handleMouseMove = (e: MouseEvent) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const canvasX = (e.clientX - rect.left) * scaleX;
+        const canvasY = (e.clientY - rect.top) * scaleY;
+        mousePositionRef.current = { x: canvasX, y: canvasY };
+      };
       
-      const resizeCanvas = () => {
+      const resizeCanvas = async () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        console.log(`Canvas resized to: ${canvas.width}x${canvas.height}`);
-        
-        let updated = false;
+        console.log(`resizeCanvas for route: ${route}, screen: ${canvas.width}x${canvas.height}`);
 
-        if(isScreenSize('small')) {
-            targetsPointRef.current = getWordPointCloud("sami. f", 100, 5);
-            updated = true;
-        } else if(isScreenSize('medium')) {
-            targetsPointRef.current = getWordPointCloud("sami. f", 200, 7);
-            updated = true;
-        } else if(isScreenSize('large')) {
-            targetsPointRef.current = getWordPointCloud("sami. f", 350, 8);
-            updated = true;
+        let updated = false;
+        const wordD = { small: 8, medium: 12, large: 20 };
+        const imgD = { small: 8, medium: 12, large: 15 };
+        const imgSrc = imageMap[route as '/writings' | '/thoughts' | '/programs'];
+
+        if (isScreenSize('small')) {
+          if (imgSrc) {
+            try {
+              targetsPointRef.current = await getImagePointCloud(imgSrc, imgD.small);
+              console.log('Loaded image targets:', targetsPointRef.current.length);
+              // cap points
+              const MAX_IMG_POINTS = 2000;
+              if (targetsPointRef.current.length > MAX_IMG_POINTS) {
+                targetsPointRef.current = targetsPointRef.current.filter((_, i) => i % Math.ceil(targetsPointRef.current.length / MAX_IMG_POINTS) === 0);
+                console.log('Capped image targets to:', targetsPointRef.current.length);
+              }
+            } catch (err) {
+              console.error('Failed to load image point cloud', err);
+              targetsPointRef.current = getWordPointCloud("sami. f", 100, wordD.small);
+              console.log('Fallback word targets:', targetsPointRef.current.length);
+            }
+          } else {
+            targetsPointRef.current = getWordPointCloud("sami. f", 100, wordD.small);
+            console.log('Word targets (no imgSrc):', targetsPointRef.current.length);
+          }
+          updated = true;
+        } else if (isScreenSize('medium')) {
+          if (imgSrc) {
+            try {
+              targetsPointRef.current = await getImagePointCloud(imgSrc, imgD.medium);
+              console.log('Loaded image targets:', targetsPointRef.current.length);
+              // cap points
+              const MAX_IMG_POINTS = 2000;
+              if (targetsPointRef.current.length > MAX_IMG_POINTS) {
+                targetsPointRef.current = targetsPointRef.current.filter((_, i) => i % Math.ceil(targetsPointRef.current.length / MAX_IMG_POINTS) === 0);
+                console.log('Capped image targets to:', targetsPointRef.current.length);
+              }
+            } catch (err) {
+              console.error('Failed to load image point cloud', err);
+              targetsPointRef.current = getWordPointCloud("sami. f", 200, wordD.medium);
+              console.log('Fallback word targets:', targetsPointRef.current.length);
+            }
+          } else {
+            targetsPointRef.current = getWordPointCloud("sami. f", 200, wordD.medium);
+            console.log('Word targets (no imgSrc):', targetsPointRef.current.length);
+          }
+          updated = true;
+        } else if (isScreenSize('large')) {
+          if (imgSrc) {
+            try {
+              targetsPointRef.current = await getImagePointCloud(imgSrc, imgD.large);
+              console.log('Loaded image targets:', targetsPointRef.current.length);
+              // cap points
+              const MAX_IMG_POINTS = 2000;
+              if (targetsPointRef.current.length > MAX_IMG_POINTS) {
+                targetsPointRef.current = targetsPointRef.current.filter((_, i) => i % Math.ceil(targetsPointRef.current.length / MAX_IMG_POINTS) === 0);
+                console.log('Capped image targets to:', targetsPointRef.current.length);
+              }
+            } catch (err) {
+              console.error('Failed to load image point cloud', err);
+              targetsPointRef.current = getWordPointCloud("sami. f", 800, wordD.large);
+              console.log('Fallback word targets:', targetsPointRef.current.length);
+            }
+          } else {
+            targetsPointRef.current = getWordPointCloud("sami. f", 800, wordD.large);
+            console.log('Word targets (no imgSrc):', targetsPointRef.current.length);
+          }
+          updated = true;
         }
 
-
         if(updated) {
+          console.log('Initializing boids count:', targetsPointRef.current.length);
           const min = -1;
           const max = 1;
           boidsRef.current = Array(targetsPointRef.current.length).fill(null).map((_, i) => {
@@ -223,19 +336,13 @@ export default function Boids() {
         }
       };
 
-      const handleMouseMove = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;   
-        const scaleY = canvas.height / rect.height;  
-
-        const canvasX = (e.clientX - rect.left) * scaleX; 
-        const canvasY = (e.clientY - rect.top) * scaleY;
-
-        mousePositionRef.current = { x: canvasX, y: canvasY };
+      // debounce resize to avoid repeated expensive recompute
+      let resizeTimer: NodeJS.Timeout;
+      const debouncedResize = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { resizeCanvas(); }, 200);
       };
-
-      resizeCanvas(); 
-      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('resize', debouncedResize);
       window.addEventListener('mousemove', handleMouseMove);
 
       const buttons = Array.from(document.querySelectorAll('.mono-button')) as HTMLElement[];
@@ -261,8 +368,8 @@ export default function Boids() {
       const maxSpeed = 3;
       let lastFrameTime = performance.now();
       const animate = (timestamp: number) => {
-        // throttle @ 45 fps
-        const throttle = 45;
+        // throttle @ 30 fps
+        const throttle = 30;
         const delta = timestamp - lastFrameTime;
         if (delta < 1000 / throttle) {
           requestAnimationFrame(animate);
@@ -451,11 +558,14 @@ export default function Boids() {
         requestAnimationFrame(animate);
 
       };
- 
-      requestAnimationFrame(animate);
+      // initial load and start loop (after animate is defined)
+      (async () => {
+        await resizeCanvas();
+        requestAnimationFrame(animate);
+      })();
 
       return () => {
-        window.removeEventListener('resize', resizeCanvas);
+        window.removeEventListener('resize', debouncedResize);
         window.removeEventListener('mousemove', handleMouseMove);
         buttons.forEach((button) => {
           button.removeEventListener('mouseenter', onEnter);

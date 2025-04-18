@@ -27,25 +27,45 @@ export default function Home() {
       <div className="flex flex-row gap-4 md:gap-6 mt-auto">
         <Link href="/writings" className="text-white hover:text-gray-300 z-10">
           <Button
-        text="writings"
-        variant="outline"
-        size="medium"
-        icon={<ArrowRightIcon className="h-3 w-3" />}
-        iconPosition="right"
+            text={
+              <>
+                <span className="hidden md:inline">writings</span>
+                <span className="inline md:hidden">writ.</span>
+              </>
+            }
+            variant="outline"
+            size="medium"
+            icon={<ArrowRightIcon className="h-3 w-3" />}
+            iconPosition="right"
           />
         </Link>
         <Link href="/thoughts" className="text-white hover:text-gray-300 z-10">
           <Button
-        text="thoughts"
-        variant="outline"
-        size="medium"
-        icon={<ArrowRightIcon className="h-3 w-3" />}
-        iconPosition="right"
+            text={
+              <>
+                <span className="hidden md:inline">thoughts</span>
+                <span className="inline md:hidden">thou.</span>
+              </>
+            }
+            variant="outline"
+            size="medium"
+            icon={<ArrowRightIcon className="h-3 w-3" />}
+            iconPosition="right"
           />
         </Link>
         <Link href="/programs" className="text-white hover:text-gray-300 z-10">
           <Button
-        text="programs" variant="outline" size="medium" icon={<ArrowRightIcon className="h-3 w-3" />} iconPosition="right" />
+            text={
+              <>
+                <span className="hidden md:inline">programs</span>
+                <span className="inline md:hidden">prog.</span>
+              </>
+            }
+            variant="outline"
+            size="medium"
+            icon={<ArrowRightIcon className="h-3 w-3" />}
+            iconPosition="right"
+          />
         </Link>
       </div>
     </div>
