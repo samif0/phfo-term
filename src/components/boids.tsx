@@ -233,11 +233,15 @@ export default function Boids() {
           if (!initialized) {
             // instantiate worker via URL import; Next/webpack will emit correct file path in prod
             console.log('trying to create worker');
+            const workerUrl = new URL('../workers/boids.worker.ts', import.meta.url);
+            console.log('attempting to load boids worker from:', workerUrl.href);
 
-            worker = new Worker(
-              new URL('../workers/boids.worker.ts', import.meta.url),
+             worker = new Worker(
+              workerUrl,
               { type: 'module' }
             );
+
+            
 
             console.log('worker created', worker)
 
