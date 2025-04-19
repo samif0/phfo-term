@@ -5,7 +5,6 @@ const nextConfig: NextConfig & { webpack?: Function } = {
   trailingSlash: true,
   distDir: "build",
   webpack(config, { isServer }) {
-    // Handle web worker files
     config.module.rules.push({
       test: /\.worker\.ts$/,
       use: [{

@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import { constants } from "node:buffer";
+
 let canvas: OffscreenCanvas;
 let ctx: OffscreenCanvasRenderingContext2D;
 
@@ -20,9 +24,9 @@ let NEIGHBOR_RADIUS_SQ = NEIGHBOR_RADIUS * NEIGHBOR_RADIUS;
 let MAX_NEIGHBORS = 3;
 let cellSize = NEIGHBOR_RADIUS * 2;
 let mouseInfluenceRadius = 350;
-let throttle = 60;
+const throttle = 60;
 let lastFrameTime = 0;
-let maxSpeed = 3;
+const maxSpeed = 3;
 
 // track external pointer
 let pointer: { x: number; y: number } = { x: -1000, y: -1000 };
@@ -200,7 +204,7 @@ function animate() {
       const dyH = hoverY - boidY;
       const distH = Math.hypot(dxH, dyH);
       if (distH > 0) {
-        let baseAngle = Math.atan2(dyH, dxH);
+        const baseAngle = Math.atan2(dyH, dxH);
         // add randomness
         const jitter = (Math.random() * 2 - 1) * (Math.PI / 4);
         const angle = baseAngle + jitter;
