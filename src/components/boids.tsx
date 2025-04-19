@@ -10,7 +10,6 @@ const NEIGHBOR_RADIUS_SQ = NEIGHBOR_RADIUS * NEIGHBOR_RADIUS;
 // cache for image point clouds by src|density
 const imageCloudCache = new Map<string, { x: number; y: number }[]>();
 
-
 async function getImagePointCloud(src: string, density = 9) {
   const cacheKey = `${src}|${density}`;
   if (imageCloudCache.has(cacheKey)) {
@@ -80,23 +79,6 @@ function getWordPointCloud(text: string, fontSize = 500, density = 9) {
   return points;
 }
 
-function isNeighbor(boid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty: number}, 
-  otherBoid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty: number } ){
-  const dx = otherBoid.x - boid.x;
-  const dy = otherBoid.y - boid.y;
-  return dx * dx + dy * dy < NEIGHBOR_RADIUS_SQ;
-}
-
-function normalizeVector(vector: {x: number, y: number}) {
-  const magnitude = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
-  if (magnitude > 0) {
-    return {
-      x: vector.x / magnitude,
-      y: vector.y / magnitude
-    };
-  }
-  return vector;
-}
 
 function isScreenSize(size: 'small' | 'medium' | 'large'): boolean {
   const width = window.innerWidth;
@@ -112,84 +94,24 @@ function isScreenSize(size: 'small' | 'medium' | 'large'): boolean {
 }
 
 
-function calculateSeparation(boid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty:number },
-   boids: { x: number; y: number; dx: number; dy: number, s :number, tx: number, ty: number}[]){
-
-  let avgSeparationX = 0;
-  let avgSeparationY = 0;
-  let numNeighbors = 0;
-
-  for (const otherBoid of boids) {
-    if (boid === otherBoid) continue;
-
-    if(isNeighbor(boid, otherBoid) && boid.s == otherBoid.s) {
-      const separationX = (boid.x - otherBoid.x);
-      const separationY = (boid.y - otherBoid.y);
-      avgSeparationX += separationX;
-      avgSeparationY += separationY;
-      numNeighbors++;
-    }
-  }
-
-  if(numNeighbors > 0) {
-    avgSeparationX /= numNeighbors;
-    avgSeparationY /= numNeighbors;
-  }
-  return { x: avgSeparationX, y: avgSeparationY };
-}
-
-function calculateAlignment(boid: { x: number; y: number; dx: number; dy: number, s: number, tx: number, ty: number }, 
-  boids: { x: number; y: number; dx: number; dy: number, s: number, tx: number, ty: number}[]){
-  let avgAlignmentX = 0;
-  let avgAlignmentY = 0;
-  let numNeighbors = 0;
-  
-  for (const otherBoid of boids) {
-    if (boid === otherBoid) continue;
-
-    if(isNeighbor(boid, otherBoid) && boid.s == otherBoid.s) {
-      avgAlignmentX += otherBoid.dx;
-      avgAlignmentY += otherBoid.dy;
-      numNeighbors++;
-    }
-  }
-  if(numNeighbors > 0) {
-    avgAlignmentX /= numNeighbors;
-    avgAlignmentY /= numNeighbors;
-  }
-  return { x: avgAlignmentX, y: avgAlignmentY };
-
-}
-
-function calculateCohesion(boid: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty: number }, 
-  boids: { x: number, y: number, dx: number, dy: number, s: number, tx: number, ty: number }[]){
-
-  let avgCohesionX = 0;
-  let avgCohesionY = 0;
-  let numNeighbors = 0;
-
-  for (const otherBoid of boids) {
-    if (boid === otherBoid) continue;
-
-    if(isNeighbor(boid, otherBoid) && boid.s == otherBoid.s) {
-      avgCohesionX += otherBoid.x;
-      avgCohesionY += otherBoid.y;
-      numNeighbors++;
-    }
-  }
-  if(numNeighbors > 0) {
-    avgCohesionX /= numNeighbors;
-    avgCohesionY /= numNeighbors;
-  }
-  return { x: avgCohesionX, y: avgCohesionY };
-}
-
 export default function Boids() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const boidsRef = useRef<Array<{ x: number; y: number; dx: number; dy: number, s: number, tx: number, ty: number}>>([]);
     const mousePositionRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 });
     const targetsPointRef = useRef<{ x: number; y: number }[]>([]);
     const hoverTargetRef = useRef<{ x: number; y: number } | null>(null); 
+    // Typed buffers stored in a ref to avoid re-allocating on every render/mount
+    const buffersRef = useRef<{
+      positionsX: Float32Array;
+      positionsY: Float32Array;
+      velocitiesX: Float32Array;
+      velocitiesY: Float32Array;
+      targetsX: Float32Array;
+      targetsY: Float32Array;
+      states: Uint8Array;
+      neighborIndexPool: Int32Array;
+      neighborPoolLength: number;
+    } | null>(null);
 
     const imageMap = useMemo(() => ({
       '/writings': '/images/writing-img.svg',
@@ -206,15 +128,24 @@ export default function Boids() {
       if (!canvasRef.current){
         return;
       }
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d')!;
-      const cellSize = 100;
-      const MAX_NEIGHBORS = 3;
-      let cols = 0;
-      let rows = 0;
-      let grid: number[][] = [];
+      // ensure fresh canvas without existing context (fix transferControlToOffscreen error)
+      let canvas = canvasRef.current!;
+      const originalCanvas = canvas;
+      const newCanvas = originalCanvas.cloneNode(true) as HTMLCanvasElement;
+      originalCanvas.parentNode?.replaceChild(newCanvas, originalCanvas);
+      canvas = newCanvas;
+      canvasRef.current = newCanvas;
+      // set initial size before worker transfer
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
 
-      //on remount clear hover target
+      const cellSize = NEIGHBOR_RADIUS * 2;
+      const MAX_NEIGHBORS = 3;
+      // defer worker setup until we have loaded initial targets
+      let worker: Worker;
+      let initialized = false;
+
+      // on remount clear hover target
       hoverTargetRef.current = null;
 
       const route = pathname.replace(/\/$/, '');
@@ -225,19 +156,22 @@ export default function Boids() {
         const canvasX = (e.clientX - rect.left) * scaleX;
         const canvasY = (e.clientY - rect.top) * scaleY;
         mousePositionRef.current = { x: canvasX, y: canvasY };
+        // send free-move pointer position to worker for repulsion
+        if (initialized) worker.postMessage({ type: 'pointer', x: canvasX, y: canvasY });
       };
       
       const resizeCanvas = async () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
         console.log(`resizeCanvas for route: ${route}, screen: ${canvas.width}x${canvas.height}`);
 
         let updated = false;
-        const wordD = { small: 8, medium: 12, large: 15 };
-        const imgD = { small: 8, medium: 12, large: 15 };
-        const imgSrc = imageMap[route as '/writings' | '/thoughts' | '/programs'];
+        const wordD = { small: 3, medium: 4, large: 5 };
+        const imgD = { small: 3, medium: 3, large: 2};
+        // pick image src by matching route prefix
+        const keys = Object.keys(imageMap);
+        const matchKey = keys.find(key => route.startsWith(key));
+        const imgSrc = matchKey ? imageMap[matchKey as keyof typeof imageMap] : undefined;
 
-        const MAX_IMG_POINTS = 2000;
+        const MAX_IMG_POINTS = 5000;
         async function loadTargetsForSize(
           imgSrc: string | undefined,
           imgDensity: number,
@@ -265,40 +199,68 @@ export default function Boids() {
           large: { imgDensity: imgD.large, wordFontSize: 500, wordDensity: wordD.large },
         };
 
-        const sizeKey = isScreenSize('small')
-          ? 'small'
-          : isScreenSize('medium')
-            ? 'medium'
-            : isScreenSize('large')
-              ? 'large'
-              : null;
-
-        if (sizeKey) {
-          const cfg = sizeConfigs[sizeKey];
-          targetsPointRef.current = await loadTargetsForSize(imgSrc, cfg.imgDensity, cfg.wordFontSize, cfg.wordDensity);
-          updated = true;
-        }
+        // always load a target point cloud: image (if available) or fallback word
+        const sizeKey = isScreenSize('small') ? 'small' : isScreenSize('medium') ? 'medium' : 'large';
+        const cfg = sizeConfigs[sizeKey];
+        targetsPointRef.current = await loadTargetsForSize(imgSrc, cfg.imgDensity, cfg.wordFontSize, cfg.wordDensity);
+        updated = true;
 
         if(updated) {
           const min = -1;
           const max = 1;
-          boidsRef.current = Array(targetsPointRef.current.length).fill(null).map((_, i) => {
-            const tps = targetsPointRef.current[i];
-    
-            const calculatedTx = tps.x;
-            const calculatedTy = tps.y;
-
-            return {
-                
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                dx: (Math.random() * max) + (Math.random() * min),
-                dy: (Math.random() * max) + (Math.random() * min),
-                s: Math.round(Math.random() * 3),
-                tx: calculatedTx,
-                ty: calculatedTy
+          const N = targetsPointRef.current.length;
+          // store buffers in ref
+          buffersRef.current = {
+            positionsX: new Float32Array(N),
+            positionsY: new Float32Array(N),
+            velocitiesX: new Float32Array(N),
+            velocitiesY: new Float32Array(N),
+            targetsX: new Float32Array(N),
+            targetsY: new Float32Array(N),
+            states: new Uint8Array(N),
+            neighborIndexPool: new Int32Array(N * 9),
+            neighborPoolLength: 0,
+          };
+          const buf = buffersRef.current;
+          // initialize buffers
+          for (let i = 0; i < N; i++) {
+            buf.positionsX[i] = Math.random() * canvas.width;
+            buf.positionsY[i] = Math.random() * canvas.height;
+            buf.velocitiesX[i] = (Math.random() * 2 - 1);
+            buf.velocitiesY[i] = (Math.random() * 2 - 1);
+            buf.targetsX[i] = targetsPointRef.current[i].x;
+            buf.targetsY[i] = targetsPointRef.current[i].y;
+            buf.states[i] = Math.round(Math.random() * 3);
+          }
+          // notify worker of resize and new targets
+          if (!initialized) {
+            // first time: init worker with offscreen canvas and targets
+            worker = new Worker(new URL('./boids.worker.ts', import.meta.url), { type: 'module' });
+            const offscreen = canvas.transferControlToOffscreen();
+            worker.postMessage({
+              type: 'init',
+              canvas: offscreen,
+              width: canvas.width,
+              height: canvas.height,
+              neighborRadius: NEIGHBOR_RADIUS,
+              maxNeighbors: MAX_NEIGHBORS,
+              cellSize,
+              mouseInfluenceRadius,
+              targetPoints: targetsPointRef.current
+            }, [offscreen]);
+            // listen for frameTime messages from worker
+            worker.onmessage = (e: MessageEvent) => {
+              const msg = e.data;
+              if (msg.type === 'frameTime' && typeof msg.duration === 'number') {
+                // expose for profiler
+                // @ts-expect-error global var
+                window.__lastBoidFrameTime = msg.duration;
+              }
             };
-          });
+            initialized = true;
+          } else {
+            worker.postMessage({ type: 'resize', width: canvas.width, height: canvas.height, targetPoints: targetsPointRef.current });
+          }
         }
 
         if (targetsPointRef.current.length > 0) {
@@ -329,218 +291,28 @@ export default function Boids() {
           x: (rect.left + rect.width / 2 - canvasRect.left) * scaleX,
           y: (rect.top + rect.height / 2 - canvasRect.top) * scaleY
         };
+        // notify worker of hover start (trigger attraction animation)
+        worker.postMessage({ type: 'hover', subtype: 'start', x: hoverTargetRef.current!.x, y: hoverTargetRef.current!.y });
       };
       
-      const onLeave = () => { hoverTargetRef.current = null; };
+      const onLeave = () => {
+        // notify worker of hover end
+        hoverTargetRef.current = null;
+        worker.postMessage({ type: 'hover', subtype: 'end' });
+      };
 
       buttons.forEach((button) => {
         button.addEventListener('mouseenter', onEnter);
         button.addEventListener('mouseleave', onLeave);
       });
       
-      const maxSpeed = 3;
-      let lastFrameTime = performance.now();
-      const neighborListPool: number[][] = [];
-      const animate = (timestamp: number) => {
-        // throttle @ 30 fps
-        const throttle = 30;
-        const delta = timestamp - lastFrameTime;
-        if (delta < 1000 / throttle) {
-          requestAnimationFrame(animate);
-          return;
-        }
-        lastFrameTime = timestamp;
-        const frameStart = timestamp;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const neededCols = Math.ceil(canvas.width / cellSize);
-        const neededRows = Math.ceil(canvas.height / cellSize);
-        if (grid.length !== neededCols * neededRows) {
-          cols = neededCols;
-          rows = neededRows;
-          grid = Array(cols * rows).fill(null).map(() => []);
-        } else {
-          grid.forEach(cell => { cell.length = 0; });
-        }
-         boidsRef.current.forEach((b, i) => {
-           const xCell = Math.floor(b.x / cellSize);
-           const yCell = Math.floor(b.y / cellSize);
-           if (xCell >= 0 && xCell < cols && yCell >= 0 && yCell < rows) {
-             grid[yCell * cols + xCell].push(i);
-           }
-         });
-
-         boidsRef.current.forEach((boid, index) => {
-           const xCell = Math.floor(boid.x / cellSize);
-           const yCell = Math.floor(boid.y / cellSize);
-           const localIndices = neighborListPool.pop() || [];
-            for (let dx = -1; dx <= 1; dx++) {
-              for (let dy = -1; dy <= 1; dy++) {
-                const nx = xCell + dx;
-                const ny = yCell + dy;
-                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
-                  localIndices.push(...grid[ny * cols + nx]);
-                }
-              }
-            }
-            const neighbors = localIndices
-              .map(i => boidsRef.current[i])
-              .filter(o => o !== boid && boid.s === o.s && isNeighbor(boid, o));
-            if (neighbors.length > MAX_NEIGHBORS) neighbors.length = MAX_NEIGHBORS;
-            localIndices.length = 0;
-            neighborListPool.push(localIndices);
-
-          const separation = calculateSeparation(boid, neighbors);
-          const alignment = calculateAlignment(boid, neighbors);
-          const cohesion = calculateCohesion(boid, neighbors);
-
-          const target = hoverTargetRef.current || { x: boid.tx, y: boid.ty };
-          const toTargetX = target.x - boid.x;
-          const toTargetY = target.y - boid.y;
-          const distSq = toTargetX * toTargetX + toTargetY * toTargetY;
-          const epsSq = 0.5 * 0.5;;
-
-          let targetForceX = 0;
-          let targetForceY = 0;
-
-          if (distSq > epsSq) {
-                const distToTarget = Math.sqrt(distSq);
-
-                if (distToTarget > 0 && Number.isFinite(distToTarget)) {
-                    const invDist = 2.0 / distToTarget;
-                    targetForceX = toTargetX * invDist;
-                    targetForceY = toTargetY * invDist;
-
-                    if (isNaN(targetForceX) || isNaN(targetForceY)) {
-                        console.error(`NaN detected AFTER normalization for Boid ${index}`, { boid, toTargetX, toTargetY, distToTarget, invDist });
-                        targetForceX = 0;
-                        targetForceY = 0;
-                    }
-                } else {
-                    console.warn(`Invalid distToTarget (${distToTarget}) for Boid ${index} despite distSq > epsSq`, { boid, distSq });
-                }
-            }
-       
-          const separationWeight = 0.1;
-          const alignmentWeight = 0.005;
-          const cohesionWeight = 0.03;
-          const targetWeight = 0.4;
-          const mouseWeight = 3;
-
-          const normSeparation = normalizeVector(separation);
-          const normAlignment = normalizeVector(alignment);
-          const normCohesion = normalizeVector(cohesion);
-
-          let mouseForceX = 0;
-          let mouseForceY = 0;
-          const dxMouse = boid.x - mousePositionRef.current.x;
-          const dyMouse = boid.y - mousePositionRef.current.y;
-          const distMouseSq = dxMouse * dxMouse + dyMouse * dyMouse;
-
-          if (distMouseSq > 0 && distMouseSq < mouseInfluenceRadius * mouseInfluenceRadius) {
-              const distMouse = Math.sqrt(distMouseSq);
-              const strength = (mouseInfluenceRadius - distMouse) / mouseInfluenceRadius;
-              mouseForceX = (dxMouse / distMouse) * strength;
-              mouseForceY = (dyMouse / distMouse) * strength;
-
-               if (isNaN(mouseForceX) || isNaN(mouseForceY)) {
-                    mouseForceX = 0; mouseForceY = 0;
-               }
-          }
-          
-          const forceX = (normSeparation.x * separationWeight) 
-          + (normAlignment.x * alignmentWeight) 
-          + (normCohesion.x * cohesionWeight) 
-          + (targetForceX * targetWeight)
-          + (mouseForceX * mouseWeight);
-          
-          const forceY = (normSeparation.y * separationWeight) 
-          + (normAlignment.y * alignmentWeight) 
-          + (normCohesion.y * cohesionWeight) 
-          + (targetForceY * targetWeight)
-          + (mouseForceY * mouseWeight);
-          
-
-
-          const forceMultiplier = 0.2;
-          const damping = 0.95;
-
-          boid.dx += forceX * forceMultiplier;
-          boid.dy += forceY * forceMultiplier;
-          
-          boid.dx *= damping;
-          boid.dy *= damping;
-
-          const speed = Math.sqrt(boid.dx * boid.dx + boid.dy * boid.dy);
-          if (speed > maxSpeed) {
-            boid.dx = (boid.dx / speed) * maxSpeed;
-            boid.dy = (boid.dy / speed) * maxSpeed;
-          }
- 
-          boid.x += boid.dx;
-          boid.y += boid.dy;
-          
-          const buffer = 10;
-
-          if (boid.x > canvas.width + buffer) boid.x = -buffer;
-          if (boid.x < -buffer) boid.x = canvas.width + buffer;
-          if (boid.y > canvas.height + buffer) boid.y = -buffer;
-          if (boid.y < -buffer) boid.y = canvas.height + buffer;
-          
-
-          const angle = Math.atan2(boid.dy, boid.dx);
-          ctx.save();
-          ctx.translate(boid.x, boid.y);
-          ctx.rotate(angle);
-          ctx.beginPath();
-          ctx.moveTo(3, 0);
-          ctx.lineTo(-1.5, 1.5);
-          ctx.lineTo(-1.5, -1.5);
-          ctx.closePath();
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-          ctx.fill();
-          ctx.restore();
-
-        });
-        
-
-        /*
-        const currentMousePos = mousePositionRef.current;
-        const mouseX = currentMousePos.x;
-        const mouseY = currentMousePos.y;
-        const isValidCoords = Number.isFinite(mouseX) && Number.isFinite(mouseY);
-
-        if (isValidCoords) {
-            ctx.save();
-
-            ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
-            ctx.fillRect(mouseX - 5, mouseY - 5, 10, 10);
-
-            ctx.beginPath();
-            ctx.arc(mouseX, mouseY, mouseInfluenceRadius, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
-            ctx.lineWidth = 2;
-            ctx.globalAlpha = 1;
-            ctx.stroke();
-
-            ctx.restore();
-        }
-        */
-
-        const frameEnd = performance.now();
-        // @ts-expect-error __lastBoidFrameTime is not defined in the global scope
-        window.__lastBoidFrameTime = frameEnd - frameStart;
-        requestAnimationFrame(animate);
-
-      };
-      // initial load and start loop
-      (async () => {
-        await resizeCanvas();
-        requestAnimationFrame(animate);
-      })();
+      // local animation and buffers replaced by web worker
+      // initial load triggers resizeCanvas which notifies worker
+      resizeCanvas();
 
       return () => {
+        // terminate worker on cleanup
+        worker.terminate();
         window.removeEventListener('resize', debouncedResize);
         window.removeEventListener('mousemove', handleMouseMove);
         buttons.forEach((button) => {
@@ -548,8 +320,6 @@ export default function Boids() {
           button.removeEventListener('mouseleave', onLeave);
         });
       }
-
-      
       
     }, [pathname]);
   
