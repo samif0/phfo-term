@@ -5,7 +5,6 @@ import { useEffect, useRef, useMemo } from 'react';
 
 // performance constants
 const NEIGHBOR_RADIUS = 15;
-const NEIGHBOR_RADIUS_SQ = NEIGHBOR_RADIUS * NEIGHBOR_RADIUS;
 
 // cache for image point clouds by src|density
 const imageCloudCache = new Map<string, { x: number; y: number }[]>();
@@ -206,8 +205,6 @@ export default function Boids() {
         updated = true;
 
         if(updated) {
-          const min = -1;
-          const max = 1;
           const N = targetsPointRef.current.length;
           // store buffers in ref
           buffersRef.current = {
