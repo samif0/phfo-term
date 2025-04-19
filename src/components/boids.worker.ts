@@ -148,10 +148,6 @@ function animate() {
   const frameStart = performance.now();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // draw point-cloud shape targets as light dots
-  if (targetBitmap) {
-    ctx.drawImage(targetBitmap, 0, 0);
-  }
 
   // prepare path for all boids to batch draw using precomputed shape
   const boidPath = new Path2D();
@@ -200,8 +196,8 @@ function animate() {
     let targetForceX = 0, targetForceY = 0;
     if (hoverActive) {
       // biased random direction towards hover point
-      const dxH = hoverX - boidX;
-      const dyH = hoverY - boidY;
+      const dxH = hoverX - boidX + (Math.random() - 1) * NEIGHBOR_RADIUS_SQ;
+      const dyH = hoverY - boidY + (Math.random() - 1) * NEIGHBOR_RADIUS_SQ;
       const distH = Math.hypot(dxH, dyH);
       if (distH > 0) {
         const baseAngle = Math.atan2(dyH, dxH);

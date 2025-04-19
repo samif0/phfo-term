@@ -119,16 +119,6 @@ export default function Boids() {
     }), []);
     const mouseInfluenceRadius = 350;
 
-    // create a worker by fetching the pre-built script and converting to a Blob URL
-    const createWorker = async (): Promise<Worker> => {
-      const res = await fetch('/boids.worker.js');
-      if (!res.ok) throw new Error('Failed to fetch worker');
-      const code = await res.text();
-      const blob = new Blob([code], { type: 'application/javascript' });
-      const url = URL.createObjectURL(blob);
-      return new Worker(url);
-    };
-
     //to reload boid + button animation to reattach listeners
     const pathname = usePathname();
 
@@ -165,7 +155,7 @@ export default function Boids() {
         const canvasY = (e.clientY - rect.top) * scaleY;
         mousePositionRef.current = { x: canvasX, y: canvasY };
         // send free-move pointer position to worker for repulsion
-        if (initialized) worker.postMessage({ type: 'pointer', x: canvasX, y: canvasY });
+        if (initialized && !hoverTargetRef.current) worker.postMessage({ type: 'pointer', x: canvasX, y: canvasY });
       };
       
       const resizeCanvas = async () => {
@@ -174,12 +164,12 @@ export default function Boids() {
         let updated = false;
         const wordD = { small: 3, medium: 4, large: 5 };
         const imgD = { small: 3, medium: 3, large: 2};
+        const MAX_IMG_POINTS = 5000;
         // pick image src by matching route prefix
         const keys = Object.keys(imageMap);
         const matchKey = keys.find(key => route.startsWith(key));
         const imgSrc = matchKey ? imageMap[matchKey as keyof typeof imageMap] : undefined;
 
-        const MAX_IMG_POINTS = 5000;
         async function loadTargetsForSize(
           imgSrc: string | undefined,
           imgDensity: number,
@@ -240,8 +230,11 @@ export default function Boids() {
           }
           // notify worker of resize and new targets
           if (!initialized) {
-            // first time: load worker via fetch to support static export
-            worker = await createWorker();
+            // first time: instantiate worker via URL import
+            worker = new Worker(
+              new URL('./boids.worker.ts', import.meta.url),
+              { type: 'module' }
+            );
             // transfer control to offscreen after creating worker
             const offscreen = canvas.transferControlToOffscreen();
             worker.postMessage({
@@ -300,12 +293,17 @@ export default function Boids() {
         };
         // notify worker of hover start (trigger attraction animation)
         worker.postMessage({ type: 'hover', subtype: 'start', x: hoverTargetRef.current!.x, y: hoverTargetRef.current!.y });
+        // disable repulsion during hover
+        worker.postMessage({ type: 'pointer', x: -1000, y: -1000 });
       };
       
       const onLeave = () => {
         // notify worker of hover end
         hoverTargetRef.current = null;
         worker.postMessage({ type: 'hover', subtype: 'end' });
+        // restore repulsion on hover end
+        const { x, y } = mousePositionRef.current;
+        worker.postMessage({ type: 'pointer', x, y });
       };
 
       buttons.forEach((button) => {
