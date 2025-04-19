@@ -2,7 +2,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import Boids from "@/components/boids";
 import BoidProfiler from "@/components/boidprofiler";
 
 export const viewport: Viewport = {
@@ -28,6 +27,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <head>
@@ -36,8 +36,6 @@ export default function RootLayout({
       </head>
       <body className={`${deptnf.className} min-h-screen bg-black text-white antialiased`}>
         <main className="flex min-h-screen flex-col">
-          <Boids />
-
           {children}
           <BoidProfiler />
         </main>

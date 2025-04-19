@@ -1,10 +1,13 @@
+import Boids from '@/components/boids';
 import Button from '@/components/btn';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
 export default function Home() {
+
   return (
     <div className="flex flex-col items-center min-h-screen pb-16 md:pb-20">
+      <Boids />
       <div className="w-full max-w-3xl mt-12 self-start px-4 z-10 flex items-start gap-6">
         <div>
           <h1 className="text-3xl font-semibold text-gray-400">hello.</h1>

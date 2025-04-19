@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { constants } from "node:buffer";
-
 let canvas: OffscreenCanvas;
 let ctx: OffscreenCanvasRenderingContext2D;
 

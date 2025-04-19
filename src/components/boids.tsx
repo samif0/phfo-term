@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useMemo } from 'react';
 
+
 // performance constants
 const NEIGHBOR_RADIUS = 15;
 
@@ -234,7 +235,7 @@ export default function Boids() {
             console.log('trying to create worker');
 
             worker = new Worker(
-              new URL('./boids.worker.ts', import.meta.url),
+              new URL('../workers/boids.worker.ts', import.meta.url),
               { type: 'module' }
             );
 

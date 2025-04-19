@@ -1,30 +1,24 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig & { webpack?: Function } = {
-  output: "export",
+  output: 'export',
   trailingSlash: true,
-  distDir: "build",
+  distDir: 'build',
   webpack(config, { isServer }) {
-    // transpile .worker.ts via esbuild then bundle as web worker
-    config.module.rules.push({
-      test: /\.worker\.ts$/,
-      use: [
-        {
-          loader: 'esbuild-loader',
-          options: { loader: 'ts', target: 'es2022' }
+    // `isServer` is true when building the server bundle, false for the client bundle.
+  // We only want to emit Web Worker assets for the client, so skip this rule during SSR.
+  if (!isServer) {
+      // Emit any .worker.ts or .worker.js as separate assets using Webpack 5 asset modules
+      config.module.rules.push({
+        test: /\.worker\.(ts|js)$/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'static/chunks/[name].[contenthash:8].worker.js',
         },
-        {
-          loader: 'worker-loader',
-          options: {
-            esModule: true,
-            filename: 'static/chunks/[name].[contenthash:8].js',
-            publicPath: '/_next/static/chunks/'
-          }
-        }
-      ]
-    });
+      });
+    }
     return config;
-  }
+  },
 };
 
 export default nextConfig;
