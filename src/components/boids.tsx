@@ -232,9 +232,7 @@ export default function Boids() {
           // notify worker of resize and new targets
           if (!initialized) {
             // instantiate worker via URL import; Next/webpack will emit correct file path in prod
-            console.log('trying to create worker');
             const workerUrl = new URL('../workers/boids.worker.ts', import.meta.url);
-            console.log('attempting to load boids worker from:', workerUrl.href);
 
              worker = new Worker(
               workerUrl,

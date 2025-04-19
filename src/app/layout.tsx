@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import BoidProfiler from "@/components/boidprofiler";
+import Boids from "@/components/boids";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -36,6 +37,7 @@ export default function RootLayout({
       </head>
       <body className={`${deptnf.className} min-h-screen bg-black text-white antialiased`}>
         <main className="flex min-h-screen flex-col">
+          <Boids />
           {children}
           <BoidProfiler />
         </main>
