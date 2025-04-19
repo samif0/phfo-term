@@ -231,10 +231,15 @@ export default function Boids() {
           // notify worker of resize and new targets
           if (!initialized) {
             // instantiate worker via URL import; Next/webpack will emit correct file path in prod
+            console.log('trying to create worker');
+
             worker = new Worker(
               new URL('./boids.worker.ts', import.meta.url),
               { type: 'module' }
             );
+
+            console.log('worker created', worker)
+
             // transfer control to offscreen after creating worker
             const offscreen = canvas.transferControlToOffscreen();
             worker.postMessage({
