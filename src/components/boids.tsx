@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -127,9 +126,7 @@ export default function Boids() {
       const code = await res.text();
       const blob = new Blob([code], { type: 'application/javascript' });
       const url = URL.createObjectURL(blob);
-      // eslint-disable-next-line @next/next/no-worker-import
-      // create worker via dynamic window property to avoid static analysis
-      return new (window as any).Worker(url);
+      return new Worker(url);
     };
 
     //to reload boid + button animation to reattach listeners
