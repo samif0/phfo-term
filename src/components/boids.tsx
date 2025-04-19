@@ -230,14 +230,11 @@ export default function Boids() {
           }
           // notify worker of resize and new targets
           if (!initialized) {
-            // debug: log the resolved URL for the worker
-            const workerUrl = new URL('./boids.worker.ts', import.meta.url);
-            console.log('Boids worker URL:', workerUrl.href);
-            // instantiate the worker
-            worker = new Worker(workerUrl, { type: 'module' });
-            // debug: catch load errors
-            worker.addEventListener('error', (e) => console.error('Boids worker failed to load', e));
-            worker.addEventListener('messageerror', (e) => console.error('Boids worker message error', e));
+            // instantiate worker via URL import; Next/webpack will emit correct file path in prod
+            worker = new Worker(
+              new URL('./boids.worker.ts', import.meta.url),
+              { type: 'module' }
+            );
             // transfer control to offscreen after creating worker
             const offscreen = canvas.transferControlToOffscreen();
             worker.postMessage({
