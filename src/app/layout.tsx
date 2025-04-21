@@ -34,6 +34,7 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+
       </head>
       <body className={`${deptnf.className} min-h-screen bg-black text-white antialiased`}>
         <main className="flex min-h-screen flex-col">

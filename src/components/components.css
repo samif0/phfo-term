@@ -308,3 +308,26 @@
       margin-bottom: 0.5rem;
     }
   }
+
+/* Override KaTeX to use the site's current font */
+.katex, .katex * {
+  font-family: inherit !important;
+}
+
+/* Center text on phones and tablets */
+@media (max-width: 1024px) {
+  .writing-section,
+  .thought-section,
+  .program-section {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    text-align: center;
+  }
+  .writing-text,
+  .thought-text,
+  .program-content-wrapper p {
+    margin-left: 0;
+    text-align: center;
+  }
+}

@@ -1,3 +1,8 @@
+'use client';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import "./components.css";
 
 type WritingProps = {
@@ -11,7 +16,11 @@ export default function Writing({ title, content, date }: WritingProps) {
     <section className="writing-section">
         <p className="writing-date">{date}</p>
         <h1 className="writing-title">{title}</h1>
-        <p className="writing-text">{content}</p>
+        <div className="writing-text">
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+            {content}
+          </ReactMarkdown>
+        </div>
     </section>
   );
 }
