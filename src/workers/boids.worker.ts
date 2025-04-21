@@ -36,10 +36,19 @@ let hoverY = 0;
 
 // Spatial quadtree utility types
 class Rectangle {
-  constructor(public x: number, public y: number, public w: number, public h: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+    public w: number,
+    public h: number,
+  ) {}
   contains(px: number, py: number): boolean {
-    return px >= this.x - this.w && px < this.x + this.w
-        && py >= this.y - this.h && py < this.y + this.h;
+    return (
+      px >= this.x - this.w &&
+      px < this.x + this.w &&
+      py >= this.y - this.h &&
+      py < this.y + this.h
+    );
   }
   intersects(range: Circle): boolean {
     const xDist = Math.abs(range.x - this.x);
@@ -49,11 +58,15 @@ class Rectangle {
   }
 }
 class Circle {
-  constructor(public x: number, public y: number, public r: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+    public r: number,
+  ) {}
   contains(px: number, py: number): boolean {
     const dx = px - this.x;
     const dy = py - this.y;
-    return dx*dx + dy*dy <= this.r * this.r;
+    return dx * dx + dy * dy <= this.r * this.r;
   }
 }
 class Quadtree {
@@ -63,13 +76,28 @@ class Quadtree {
   private northwest!: Quadtree;
   private southeast!: Quadtree;
   private southwest!: Quadtree;
-  constructor(private boundary: Rectangle, private capacity: number) {}
+  constructor(
+    private boundary: Rectangle,
+    private capacity: number,
+  ) {}
   subdivide(): void {
     const { x, y, w, h } = this.boundary;
-    this.northeast = new Quadtree(new Rectangle(x + w/2, y - h/2, w/2, h/2), this.capacity);
-    this.northwest = new Quadtree(new Rectangle(x - w/2, y - h/2, w/2, h/2), this.capacity);
-    this.southeast = new Quadtree(new Rectangle(x + w/2, y + h/2, w/2, h/2), this.capacity);
-    this.southwest = new Quadtree(new Rectangle(x - w/2, y + h/2, w/2, h/2), this.capacity);
+    this.northeast = new Quadtree(
+      new Rectangle(x + w / 2, y - h / 2, w / 2, h / 2),
+      this.capacity,
+    );
+    this.northwest = new Quadtree(
+      new Rectangle(x - w / 2, y - h / 2, w / 2, h / 2),
+      this.capacity,
+    );
+    this.southeast = new Quadtree(
+      new Rectangle(x + w / 2, y + h / 2, w / 2, h / 2),
+      this.capacity,
+    );
+    this.southwest = new Quadtree(
+      new Rectangle(x - w / 2, y + h / 2, w / 2, h / 2),
+      this.capacity,
+    );
     this.divided = true;
   }
   insert(point: { x: number; y: number; idx: number }): boolean {
@@ -79,8 +107,12 @@ class Quadtree {
       return true;
     }
     if (!this.divided) this.subdivide();
-    return this.northeast.insert(point) || this.northwest.insert(point)
-        || this.southeast.insert(point) || this.southwest.insert(point);
+    return (
+      this.northeast.insert(point) ||
+      this.northwest.insert(point) ||
+      this.southeast.insert(point) ||
+      this.southwest.insert(point)
+    );
   }
   query(range: Circle, found: { x: number; y: number; idx: number }[]): void {
     if (!this.boundary.intersects(range)) return;
@@ -119,8 +151,8 @@ function initBuffers() {
 
   // draw targetPoints to an offscreen canvas and capture as bitmap
   const tgtCanvas = new OffscreenCanvas(canvas.width, canvas.height);
-  const tgtCtx = tgtCanvas.getContext('2d')!;
-  tgtCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+  const tgtCtx = tgtCanvas.getContext("2d")!;
+  tgtCtx.fillStyle = "rgba(255, 255, 255, 0.2)";
   for (const pt of targetPoints) {
     tgtCtx.fillRect(pt.x, pt.y, 1, 1);
   }
@@ -130,8 +162,8 @@ function initBuffers() {
     // start boids at random positions
     positionsX[i] = Math.random() * canvas.width;
     positionsY[i] = Math.random() * canvas.height;
-    velocitiesX[i] = (Math.random() * 2 - 1);
-    velocitiesY[i] = (Math.random() * 2 - 1);
+    velocitiesX[i] = Math.random() * 2 - 1;
+    velocitiesY[i] = Math.random() * 2 - 1;
     targetsX[i] = targetPoints[i].x;
     targetsY[i] = targetPoints[i].y;
     states[i] = Math.round(Math.random() * 3);
@@ -145,7 +177,6 @@ function animate() {
   // start frame timer
   const frameStart = performance.now();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
 
   // prepare path for all boids to batch draw using precomputed shape
   const boidPath = new Path2D();
@@ -166,32 +197,60 @@ function animate() {
     qt.query(new Circle(boidX, boidY, NEIGHBOR_RADIUS), foundPoints);
 
     // inline separation, alignment, cohesion using quadtree results
-    let sepX = 0, sepY = 0, aliX = 0, aliY = 0, cohX = 0, cohY = 0;
+    let sepX = 0,
+      sepY = 0,
+      aliX = 0,
+      aliY = 0,
+      cohX = 0,
+      cohY = 0;
     let nc = 0;
     for (const p of foundPoints) {
       const idx = p.idx;
       if (idx !== index && states[idx] === boidS) {
         const dxN = p.x - boidX;
         const dyN = p.y - boidY;
-        sepX += boidX - p.x; sepY += boidY - p.y;
-        aliX += velocitiesX[idx]; aliY += velocitiesY[idx];
-        cohX += p.x; cohY += p.y;
+        sepX += boidX - p.x;
+        sepY += boidY - p.y;
+        aliX += velocitiesX[idx];
+        aliY += velocitiesY[idx];
+        cohX += p.x;
+        cohY += p.y;
         nc++;
         if (nc >= MAX_NEIGHBORS) break;
       }
     }
-    let normSepX = 0, normSepY = 0, normAliX = 0, normAliY = 0, normCohX = 0, normCohY = 0;
+    let normSepX = 0,
+      normSepY = 0,
+      normAliX = 0,
+      normAliY = 0,
+      normCohX = 0,
+      normCohY = 0;
     if (nc > 0) {
-      sepX /= nc; sepY /= nc; aliX /= nc; aliY /= nc; cohX /= nc; cohY /= nc;
+      sepX /= nc;
+      sepY /= nc;
+      aliX /= nc;
+      aliY /= nc;
+      cohX /= nc;
+      cohY /= nc;
       const magSep = Math.hypot(sepX, sepY);
-      if (magSep > 0) { normSepX = sepX / magSep; normSepY = sepY / magSep; }
+      if (magSep > 0) {
+        normSepX = sepX / magSep;
+        normSepY = sepY / magSep;
+      }
       const magAli = Math.hypot(aliX, aliY);
-      if (magAli > 0) { normAliX = aliX / magAli; normAliY = aliY / magAli; }
+      if (magAli > 0) {
+        normAliX = aliX / magAli;
+        normAliY = aliY / magAli;
+      }
       const magCoh = Math.hypot(cohX, cohY);
-      if (magCoh > 0) { normCohX = cohX / magCoh; normCohY = cohY / magCoh; }
+      if (magCoh > 0) {
+        normCohX = cohX / magCoh;
+        normCohY = cohY / magCoh;
+      }
     }
     // random jitter towards hover or shape target
-    let targetForceX = 0, targetForceY = 0;
+    let targetForceX = 0,
+      targetForceY = 0;
     if (hoverActive) {
       // biased random direction towards hover point
       const dxH = hoverX - boidX + (Math.random() - 1) * NEIGHBOR_RADIUS_SQ;
@@ -223,7 +282,8 @@ function animate() {
       }
     }
     // mouse repulsion force based on pointer
-    let mouseForceX = 0, mouseForceY = 0;
+    let mouseForceX = 0,
+      mouseForceY = 0;
     const dxM = boidX - pointer.x;
     const dyM = boidY - pointer.y;
     const distMSq = dxM * dxM + dyM * dyM;
@@ -240,8 +300,18 @@ function animate() {
     const mouseWeight = 2;
     // apply stronger attraction if hovering
     const tw = hoverActive ? 1.0 : targetWeight;
-    const forceX = normSepX * separationWeight + normAliX * alignmentWeight + normCohX * cohesionWeight + targetForceX * tw + mouseForceX * mouseWeight;
-    const forceY = normSepY * separationWeight + normAliY * alignmentWeight + normCohY * cohesionWeight + targetForceY * tw + mouseForceY * mouseWeight;
+    const forceX =
+      normSepX * separationWeight +
+      normAliX * alignmentWeight +
+      normCohX * cohesionWeight +
+      targetForceX * tw +
+      mouseForceX * mouseWeight;
+    const forceY =
+      normSepY * separationWeight +
+      normAliY * alignmentWeight +
+      normCohY * cohesionWeight +
+      targetForceY * tw +
+      mouseForceY * mouseWeight;
     const forceMultiplier = 0.2;
     const damping = 0.95;
     velocitiesX[index] += forceX * forceMultiplier;
@@ -261,19 +331,21 @@ function animate() {
     if (positionsY[index] > canvas.height + buffer) positionsY[index] = -buffer;
     if (positionsY[index] < -buffer) positionsY[index] = canvas.height + buffer;
     // add transformed base triangle shape
-    const x = positionsX[index], y = positionsY[index];
+    const x = positionsX[index],
+      y = positionsY[index];
     const angle = Math.atan2(velocitiesY[index], velocitiesX[index]);
-    const c = Math.cos(angle), s = Math.sin(angle);
+    const c = Math.cos(angle),
+      s = Math.sin(angle);
     const matrix = new DOMMatrix([c, s, -s, c, x, y]);
     boidPath.addPath(baseBoidPath, matrix);
   }
   // batch fill all boids once
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
   ctx.fill(boidPath);
 
   // end frame timer and notify main thread
   const frameEnd = performance.now();
-  self.postMessage({ type: 'frameTime', duration: frameEnd - frameStart });
+  self.postMessage({ type: "frameTime", duration: frameEnd - frameStart });
   // schedule next frame at target throttle
   setTimeout(animate, 1000 / throttle);
 }
@@ -281,7 +353,7 @@ function animate() {
 self.onmessage = (e) => {
   const data = e.data;
   switch (data.type) {
-    case 'init':
+    case "init":
       canvas = data.canvas;
       mouseInfluenceRadius = data.mouseInfluenceRadius;
       NEIGHBOR_RADIUS = data.neighborRadius;
@@ -291,26 +363,42 @@ self.onmessage = (e) => {
       targetPoints = data.targetPoints;
       canvas.width = data.width;
       canvas.height = data.height;
-      ctx = canvas.getContext('2d')!;
+      ctx = canvas.getContext("2d")!;
       initBuffers();
       // initialize quadtree boundary and capacity
-      qt = new Quadtree(new Rectangle(canvas.width/2, canvas.height/2, canvas.width/2, canvas.height/2), 16);
+      qt = new Quadtree(
+        new Rectangle(
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width / 2,
+          canvas.height / 2,
+        ),
+        16,
+      );
       lastFrameTime = performance.now();
       animate();
       break;
-    case 'resize':
+    case "resize":
       canvas.width = data.width;
       canvas.height = data.height;
       targetPoints = data.targetPoints;
       initBuffers();
       // reinitialize quadtree on resize
-      qt = new Quadtree(new Rectangle(canvas.width/2, canvas.height/2, canvas.width/2, canvas.height/2), 16);
+      qt = new Quadtree(
+        new Rectangle(
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width / 2,
+          canvas.height / 2,
+        ),
+        16,
+      );
       break;
-    case 'pointer':
+    case "pointer":
       pointer = { x: data.x, y: data.y };
       break;
-    case 'hover':
-      if (data.subtype === 'start') {
+    case "hover":
+      if (data.subtype === "start") {
         hoverActive = true;
         hoverX = data.x;
         hoverY = data.y;
@@ -329,3 +417,4 @@ baseBoidPath.lineTo(-1, -1);
 baseBoidPath.closePath();
 
 export {};
+
