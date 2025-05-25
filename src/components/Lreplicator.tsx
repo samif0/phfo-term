@@ -22,155 +22,89 @@ const REPLICATOR = [
   [2, 0],
 ];
 
+interface Replicator {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+}
+
 export default function LangtonLoops() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gridRef = useRef<number[][]>([]);
+  const replicatorsRef = useRef<Replicator[]>([]);
   const animationRef = useRef<number | undefined>(undefined);
+  const viewportRef = useRef({ x: 0, y: 0 });
   
   const CELL_SIZE = 4;
-  const GRID_SIZE = 200;
+  const SPAWN_CHANCE = 0.02;
   
-  const initGrid = () => {
-    const grid = Array(GRID_SIZE).fill(null).map(() => 
-      Array(GRID_SIZE).fill(0)
-    );
+  const initReplicators = () => {
+    // Start with a few replicators at random positions
+    const initialCount = 3;
+    const replicators: Replicator[] = [];
     
-    // Position replicators below the center text
-    const centerY = GRID_SIZE / 2;
-    const textOffsetY = GRID_SIZE * 0.15; // 15% below center
-    const textBottomY = centerY + textOffsetY;
-    
-    const rightMargin = GRID_SIZE * 0.1; // 10% margin from right edge
-    const rightSideStart = GRID_SIZE - rightMargin;
-    
-    // Single replicator starting from the right
-    const pos = { x: Math.floor(rightSideStart), y: Math.floor(textBottomY) };
-    
-    for (let y = 0; y < REPLICATOR.length; y++) {
-      for (let x = 0; x < REPLICATOR[y].length; x++) {
-        if (pos.y + y < GRID_SIZE && pos.x + x < GRID_SIZE) {
-          grid[pos.y + y][pos.x + x] = REPLICATOR[y][x];
-        }
-      }
+    for (let i = 0; i < initialCount; i++) {
+      replicators.push({
+        x: Math.random() * 200 - 100, // Random position between -100 and 100
+        y: Math.random() * 200 - 100,
+        dx: (Math.random() - 0.5) * 2, // Random direction between -1 and 1
+        dy: (Math.random() - 0.5) * 2
+      });
     }
     
-    gridRef.current = grid;
+    replicatorsRef.current = replicators;
   };
 
-  const hasPattern = (grid: number[][], x: number, y: number, pattern: number[][]) => {
-    for (let py = 0; py < pattern.length; py++) {
-      for (let px = 0; px < pattern[py].length; px++) {
-        const gx = x + px;
-        const gy = y + py;
-        if (gx >= GRID_SIZE || gy >= GRID_SIZE) return false;
-        if (grid[gy][gx] !== pattern[py][px]) return false;
+  const updateReplicators = () => {
+    const replicators = replicatorsRef.current;
+    const newReplicators: Replicator[] = [];
+    
+    for (const rep of replicators) {
+      // Random walk: occasionally change direction
+      if (Math.random() < 0.1) {
+        rep.dx = (Math.random() - 0.5) * 2;
+        rep.dy = (Math.random() - 0.5) * 2;
       }
-    }
-    return true;
-  };
-
-  const placePattern = (grid: number[][], x: number, y: number, pattern: number[][]) => {
-    for (let py = 0; py < pattern.length; py++) {
-      for (let px = 0; px < pattern[py].length; px++) {
-        const gx = x + px;
-        const gy = y + py;
-        if (gx < GRID_SIZE && gy < GRID_SIZE) {
-          grid[gy][gx] = pattern[py][px];
-        }
-      }
-    }
-  };
-
-  const applyRules = (grid: number[][], x: number, y: number): number => {
-    const current = grid[y][x];
-    
-    // Core cells remain core
-    const CORE_STATE = 1;
-    const ARM_STATE = 2;
-    
-    if (current === CORE_STATE) return CORE_STATE;
-    
-    if (current === ARM_STATE) {
-      // Check orthogonal neighbors (up, right, down, left)
-      const neighbors = [
-        { dx: 0, dy: -1 },  // up
-        { dx: 1, dy: 0 },   // right
-        { dx: 0, dy: 1 },   // down
-        { dx: -1, dy: 0 },  // left
-      ];
       
-      for (const { dx, dy } of neighbors) {
-        const nx = x + dx;
-        const ny = y + dy;
-        if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
-          if (grid[ny][nx] === CORE_STATE) {
-            // Check if neighbor is to the right
-            if (dx === 1 && dy === 0) {
-              // Check if we can form an L-shape upward
-              const canFormLUp = y > 0 && x + 1 < GRID_SIZE && 
-                  grid[y-1][x] === 0 && grid[y-1][x+1] === 0 &&
-                  grid[y][x+1] === 0;
-              if (canFormLUp) {
-                return ARM_STATE;
-              }
-            }
-            // Check if neighbor is below
-            if (dx === 0 && dy === 1) {
-              // Check if we can form an L-shape to the left
-              const canFormLLeft = x > 0 && y + 1 < GRID_SIZE &&
-                  grid[y][x-1] === 0 && grid[y+1][x-1] === 0 &&
-                  grid[y+1][x] === 0;
-              if (canFormLLeft) {
-                return ARM_STATE;
-              }
-            }
-          }
-        }
-      }
-      return ARM_STATE;
-    }
-    
-    const EMPTY_STATE = 0;
-    return EMPTY_STATE;
-  };
-
-  const updateGrid = () => {
-    const grid = gridRef.current;
-    const newGrid = grid.map(row => [...row]);
-    
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
-        newGrid[y][x] = applyRules(grid, x, y);
+      // Update position
+      rep.x += rep.dx;
+      rep.y += rep.dy;
+      
+      // Add some brownian motion
+      rep.x += (Math.random() - 0.5) * 0.5;
+      rep.y += (Math.random() - 0.5) * 0.5;
+      
+      newReplicators.push(rep);
+      
+      // Randomly spawn new replicators
+      if (Math.random() < SPAWN_CHANCE) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 10 + Math.random() * 20;
+        newReplicators.push({
+          x: rep.x + Math.cos(angle) * distance,
+          y: rep.y + Math.sin(angle) * distance,
+          dx: (Math.random() - 0.5) * 2,
+          dy: (Math.random() - 0.5) * 2
+        });
       }
     }
     
-    const patternWidth = REPLICATOR[0].length;
-    const patternHeight = REPLICATOR.length;
-    const spawnDistance = patternWidth + 1; // Pattern width plus one cell gap
-    const clearanceRadius = Math.max(patternWidth, patternHeight); // Clearance based on pattern size
-    
-    for (let y = 0; y < GRID_SIZE - patternHeight; y++) {
-      for (let x = 0; x < GRID_SIZE - patternWidth; x++) {
-        if (hasPattern(grid, x, y, REPLICATOR)) {
-          // Only spawn to the left
-          if (x - spawnDistance - patternWidth >= 0) {
-            let canSpawn = true;
-            for (let cy = y - clearanceRadius; cy <= y + patternHeight + clearanceRadius && canSpawn; cy++) {
-              for (let cx = x - spawnDistance - patternWidth; cx <= x - spawnDistance && canSpawn; cx++) {
-                if (cy >= 0 && cy < GRID_SIZE && cx >= 0 && cx < GRID_SIZE && grid[cy][cx] !== 0) {
-                  canSpawn = false;
-                }
-              }
-            }
-            if (canSpawn) {
-              placePattern(newGrid, x - spawnDistance - patternWidth, y, REPLICATOR);
-            }
-          }
-        }
-      }
+    // Limit population to prevent performance issues
+    if (newReplicators.length > 100) {
+      replicatorsRef.current = newReplicators.slice(0, 100);
+    } else {
+      replicatorsRef.current = newReplicators;
     }
     
-    gridRef.current = newGrid;
+    // Update viewport to follow center of mass
+    if (replicators.length > 0) {
+      const centerX = replicators.reduce((sum, rep) => sum + rep.x, 0) / replicators.length;
+      const centerY = replicators.reduce((sum, rep) => sum + rep.y, 0) / replicators.length;
+      
+      // Smooth camera movement
+      viewportRef.current.x = viewportRef.current.x * 0.9 + centerX * 0.1;
+      viewportRef.current.y = viewportRef.current.y * 0.9 + centerY * 0.1;
+    }
   };
 
   const draw = () => {
@@ -180,34 +114,41 @@ export default function LangtonLoops() {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    const grid = gridRef.current;
     const isLight = document.documentElement.classList.contains('light');
     const colors = isLight ? COLORS_LIGHT : COLORS;
+    const replicators = replicatorsRef.current;
     
     // Calculate boundaries based on viewport divisions
     const viewportDivisions = 3;
     const leftBoundary = canvas.width / viewportDivisions;
     const rightArea = canvas.width - leftBoundary;
-    const viewWidth = Math.floor(rightArea / CELL_SIZE);
-    const viewHeight = Math.floor(canvas.height / CELL_SIZE);
     
-    const offsetX = GRID_SIZE - viewWidth;
-    const offsetY = GRID_SIZE - viewHeight;
+    // Center of the drawable area
+    const centerX = leftBoundary + rightArea / 2;
+    const centerY = canvas.height / 2;
     
-    for (let y = 0; y < viewHeight; y++) {
-      for (let x = 0; x < viewWidth; x++) {
-        const gridX = offsetX + x;
-        const gridY = offsetY + y;
-        if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
-          const state = grid[gridY][gridX];
-          if (state !== 0) {
-            ctx.fillStyle = colors[state];
-            ctx.fillRect(
-              leftBoundary + x * CELL_SIZE,
-              y * CELL_SIZE,
-              CELL_SIZE,
-              CELL_SIZE
-            );
+    // Draw each replicator as an L-shape
+    for (const rep of replicators) {
+      // Transform replicator position to screen coordinates
+      const screenX = centerX + (rep.x - viewportRef.current.x) * CELL_SIZE;
+      const screenY = centerY + (rep.y - viewportRef.current.y) * CELL_SIZE;
+      
+      // Only draw if within viewport
+      if (screenX > leftBoundary && screenX < canvas.width && 
+          screenY > 0 && screenY < canvas.height) {
+        
+        // Draw L-shaped replicator
+        for (let py = 0; py < REPLICATOR.length; py++) {
+          for (let px = 0; px < REPLICATOR[py].length; px++) {
+            if (REPLICATOR[py][px] !== 0) {
+              ctx.fillStyle = colors[REPLICATOR[py][px]];
+              ctx.fillRect(
+                screenX + px * CELL_SIZE,
+                screenY + py * CELL_SIZE,
+                CELL_SIZE,
+                CELL_SIZE
+              );
+            }
           }
         }
       }
@@ -215,13 +156,13 @@ export default function LangtonLoops() {
   };
 
   let frameCount = 0;
-  const FRAMES_PER_UPDATE = 10; // Update grid every 10 frames
+  const FRAMES_PER_UPDATE = 5; // Update more frequently for smoother motion
   
   const animate = () => {
     frameCount++;
     
     if (frameCount % FRAMES_PER_UPDATE === 0) {
-      updateGrid();
+      updateReplicators();
     }
     
     draw();
@@ -235,7 +176,7 @@ export default function LangtonLoops() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    initGrid();
+    initReplicators();
     animate();
     
     const handleResize = () => {
