@@ -1,170 +1,231 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-// Ultra-minimal self-replicating automaton
-// States: 0=empty, 1=core, 2=arm
+// States for L-shaped replicator CA
+// 0: empty
+// 1: structure (body of L)
+// 2: signal (growth signal)
+// 3: new (newly created structure)
 const COLORS = [
   'transparent',                    // 0: empty
-  'rgba(100, 255, 100, 0.3)',      // 1: core (green)
-  'rgba(100, 200, 255, 0.2)',      // 2: arm (blue)
+  'rgba(100, 255, 100, 0.8)',      // 1: structure (green)
+  'rgba(255, 100, 100, 0.8)',      // 2: signal (red)
+  'rgba(100, 200, 255, 0.8)',      // 3: new (blue)
 ];
 
 const COLORS_LIGHT = [
   'transparent',                    // 0: empty
-  'rgba(93, 142, 93, 0.3)',        // 1: core (green)
-  'rgba(69, 137, 213, 0.2)',       // 2: arm (blue)
+  'rgba(93, 142, 93, 0.8)',        // 1: structure (green)
+  'rgba(200, 80, 80, 0.8)',        // 2: signal (red)
+  'rgba(69, 137, 213, 0.8)',       // 3: new (blue)
 ];
 
-// Simple L-shaped replicator
-const REPLICATOR = [
-  [1, 2],
-  [2, 0],
+// L-shaped seed pattern
+const L_PATTERN = [
+  [1, 1],
+  [1, 0],
 ];
 
-interface Replicator {
-  x: number;
-  y: number;
-  dx: number;
-  dy: number;
-}
-
-export default function LangtonLoops() {
+export default function Lreplicator() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const replicatorsRef = useRef<Replicator[]>([]);
+  const gridRef = useRef<number[][]>([]);
   const animationRef = useRef<number | undefined>(undefined);
-  const viewportRef = useRef({ x: 0, y: 0 });
-  
+
   const CELL_SIZE = 4;
-  const SPAWN_CHANCE = 0.02;
-  
-  const initReplicators = () => {
-    // Start with a few replicators at random positions
-    const initialCount = 3;
-    const replicators: Replicator[] = [];
-    
-    for (let i = 0; i < initialCount; i++) {
-      replicators.push({
-        x: Math.random() * 200 - 100, // Random position between -100 and 100
-        y: Math.random() * 200 - 100,
-        dx: (Math.random() - 0.5) * 2, // Random direction between -1 and 1
-        dy: (Math.random() - 0.5) * 2
-      });
+  const [gridDimensions, setGridDimensions] = useState({ width: 0, height: 0 });
+
+  // Initialize grid with L-shaped patterns
+  const initGrid = (width: number, height: number) => {
+    const grid: number[][] = [];
+    for (let y = 0; y < height; y++) {
+      grid[y] = new Array(width).fill(0);
     }
-    
-    replicatorsRef.current = replicators;
+
+    // Place initial L-shaped patterns
+    const positions = [
+      { x: width / 2 - 20, y: height / 2 },
+      { x: width / 2 + 20, y: height / 2 },
+      { x: width / 2, y: height / 2 - 20 },
+    ];
+
+    positions.forEach(pos => {
+      for (let py = 0; py < L_PATTERN.length; py++) {
+        for (let px = 0; px < L_PATTERN[py].length; px++) {
+          const x = Math.floor(pos.x) + px;
+          const y = Math.floor(pos.y) + py;
+          if (x >= 0 && x < width && y >= 0 && y < height) {
+            grid[y][x] = L_PATTERN[py][px];
+          }
+        }
+      }
+    });
+
+    gridRef.current = grid;
   };
 
-  const updateReplicators = () => {
-    const replicators = replicatorsRef.current;
-    const newReplicators: Replicator[] = [];
-    
-    for (const rep of replicators) {
-      // Random walk: occasionally change direction
-      if (Math.random() < 0.1) {
-        rep.dx = (Math.random() - 0.5) * 2;
-        rep.dy = (Math.random() - 0.5) * 2;
-      }
-      
-      // Update position
-      rep.x += rep.dx;
-      rep.y += rep.dy;
-      
-      // Add some brownian motion
-      rep.x += (Math.random() - 0.5) * 0.5;
-      rep.y += (Math.random() - 0.5) * 0.5;
-      
-      newReplicators.push(rep);
-      
-      // Randomly spawn new replicators
-      if (Math.random() < SPAWN_CHANCE) {
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 10 + Math.random() * 20;
-        newReplicators.push({
-          x: rep.x + Math.cos(angle) * distance,
-          y: rep.y + Math.sin(angle) * distance,
-          dx: (Math.random() - 0.5) * 2,
-          dy: (Math.random() - 0.5) * 2
-        });
+  // Count neighbors of a specific state
+  const countNeighbors = (grid: number[][], x: number, y: number, state: number): number => {
+    let count = 0;
+    const directions = [
+      [-1, 0], [1, 0], [0, -1], [0, 1], // von Neumann neighborhood
+    ];
+
+    for (const [dx, dy] of directions) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx >= 0 && nx < gridDimensions.width && ny >= 0 && ny < gridDimensions.height) {
+        if (grid[ny][nx] === state) count++;
       }
     }
-    
-    // Limit population to prevent performance issues
-    if (newReplicators.length > 100) {
-      replicatorsRef.current = newReplicators.slice(0, 100);
-    } else {
-      replicatorsRef.current = newReplicators;
+
+    return count;
+  };
+
+  // Check if position matches L-pattern corner
+  const isLCorner = (grid: number[][], x: number, y: number): boolean => {
+    // Check for L-shaped configuration in any rotation
+    const patterns = [
+      // Original L
+      { checks: [[0, 0, 1], [1, 0, 1], [0, 1, 1]], corner: [0, 0] },
+      // Rotated 90°
+      { checks: [[0, 0, 1], [-1, 0, 1], [0, 1, 1]], corner: [0, 0] },
+      // Rotated 180°
+      { checks: [[0, 0, 1], [-1, 0, 1], [0, -1, 1]], corner: [0, 0] },
+      // Rotated 270°
+      { checks: [[0, 0, 1], [1, 0, 1], [0, -1, 1]], corner: [0, 0] },
+    ];
+
+    for (const pattern of patterns) {
+      let matches = true;
+      for (const [dx, dy, expected] of pattern.checks) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= gridDimensions.width || ny < 0 || ny >= gridDimensions.height) {
+          matches = false;
+          break;
+        }
+        if ((grid[ny][nx] === 1 ? 1 : 0) !== expected) {
+          matches = false;
+          break;
+        }
+      }
+      if (matches) return true;
     }
-    
-    // Update viewport to follow center of mass
-    if (replicators.length > 0) {
-      const centerX = replicators.reduce((sum, rep) => sum + rep.x, 0) / replicators.length;
-      const centerY = replicators.reduce((sum, rep) => sum + rep.y, 0) / replicators.length;
-      
-      // Smooth camera movement
-      viewportRef.current.x = viewportRef.current.x * 0.9 + centerX * 0.1;
-      viewportRef.current.y = viewportRef.current.y * 0.9 + centerY * 0.1;
+
+    return false;
+  };
+
+  // Update grid based on L-replicator rules
+  const updateGrid = () => {
+    const grid = gridRef.current;
+    const newGrid: number[][] = [];
+
+    // Copy grid
+    for (let y = 0; y < gridDimensions.height; y++) {
+      newGrid[y] = [...grid[y]];
     }
+
+    // Apply rules
+    for (let y = 0; y < gridDimensions.height; y++) {
+      for (let x = 0; x < gridDimensions.width; x++) {
+        const current = grid[y][x];
+        const structureNeighbors = countNeighbors(grid, x, y, 1);
+        const signalNeighbors = countNeighbors(grid, x, y, 2);
+
+        // Rule 1: Empty cells become signals if they're at L-corners
+        if (current === 0) {
+          if (isLCorner(grid, x, y) && Math.random() < 0.01) {
+            newGrid[y][x] = 2; // Create signal
+          }
+        }
+
+        // Rule 2: Signals propagate and create new structures
+        else if (current === 2) {
+          newGrid[y][x] = 3; // Signal becomes new structure
+        }
+
+        // Rule 3: New structures mature into regular structures
+        else if (current === 3) {
+          newGrid[y][x] = 1; // New becomes structure
+        }
+
+        // Rule 4: Structures remain stable unless overcrowded
+        else if (current === 1) {
+          if (structureNeighbors > 3) {
+            newGrid[y][x] = 0; // Die from overcrowding
+          }
+        }
+
+        // Rule 5: Empty cells with signal neighbors become new structures
+        if (current === 0 && signalNeighbors > 0) {
+          // Only grow if it would extend an L-shape
+          if (structureNeighbors === 2) {
+            newGrid[y][x] = 3; // Grow new structure
+          }
+        }
+      }
+    }
+
+    gridRef.current = newGrid;
   };
 
   const draw = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
-    
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     const isLight = document.documentElement.classList.contains('light');
     const colors = isLight ? COLORS_LIGHT : COLORS;
-    const replicators = replicatorsRef.current;
-    
-    // Calculate boundaries based on viewport divisions
-    const viewportDivisions = 3;
-    const leftBoundary = canvas.width / viewportDivisions;
-    const rightArea = canvas.width - leftBoundary;
-    
-    // Center of the drawable area
-    const centerX = leftBoundary + rightArea / 2;
-    const centerY = canvas.height / 2;
-    
-    // Draw each replicator as an L-shape
-    for (const rep of replicators) {
-      // Transform replicator position to screen coordinates
-      const screenX = centerX + (rep.x - viewportRef.current.x) * CELL_SIZE;
-      const screenY = centerY + (rep.y - viewportRef.current.y) * CELL_SIZE;
-      
-      // Only draw if within viewport
-      if (screenX > leftBoundary && screenX < canvas.width && 
-          screenY > 0 && screenY < canvas.height) {
-        
-        // Draw L-shaped replicator
-        for (let py = 0; py < REPLICATOR.length; py++) {
-          for (let px = 0; px < REPLICATOR[py].length; px++) {
-            if (REPLICATOR[py][px] !== 0) {
-              ctx.fillStyle = colors[REPLICATOR[py][px]];
-              ctx.fillRect(
-                screenX + px * CELL_SIZE,
-                screenY + py * CELL_SIZE,
-                CELL_SIZE,
-                CELL_SIZE
-              );
-            }
-          }
+    const grid = gridRef.current;
+
+    // Draw grid covering entire screen
+    for (let y = 0; y < gridDimensions.height; y++) {
+      for (let x = 0; x < gridDimensions.width; x++) {
+        const state = grid[y][x];
+        if (state !== 0) {
+          ctx.fillStyle = colors[state];
+          ctx.fillRect(
+            x * CELL_SIZE,
+            y * CELL_SIZE,
+            CELL_SIZE,
+            CELL_SIZE
+          );
         }
+      }
+    }
+
+    // Draw grid lines for debugging (optional)
+    if (false) { // Set to true to see grid
+      ctx.strokeStyle = 'rgba(128, 128, 128, 0.1)';
+      ctx.lineWidth = 0.5;
+      for (let y = 0; y <= gridDimensions.height; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * CELL_SIZE);
+        ctx.lineTo(gridDimensions.width * CELL_SIZE, y * CELL_SIZE);
+        ctx.stroke();
+      }
+      for (let x = 0; x <= gridDimensions.width; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * CELL_SIZE, 0);
+        ctx.lineTo(x * CELL_SIZE, gridDimensions.height * CELL_SIZE);
+        ctx.stroke();
       }
     }
   };
 
   let frameCount = 0;
-  const FRAMES_PER_UPDATE = 5; // Update more frequently for smoother motion
-  
+  const FRAMES_PER_UPDATE = 30; // Slower updates for visibility
+
   const animate = () => {
     frameCount++;
-    
+
     if (frameCount % FRAMES_PER_UPDATE === 0) {
-      updateReplicators();
+      updateGrid();
     }
-    
+
     draw();
     animationRef.current = requestAnimationFrame(animate);
   };
@@ -172,20 +233,30 @@ export default function LangtonLoops() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    
-    initReplicators();
+
+    // Calculate grid dimensions based on screen size
+    const width = Math.floor(window.innerWidth / CELL_SIZE);
+    const height = Math.floor(window.innerHeight / CELL_SIZE);
+    setGridDimensions({ width, height });
+    initGrid(width, height);
     animate();
-    
+
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+
+      // Recalculate grid dimensions
+      const newWidth = Math.floor(window.innerWidth / CELL_SIZE);
+      const newHeight = Math.floor(window.innerHeight / CELL_SIZE);
+      setGridDimensions({ width: newWidth, height: newHeight });
+      initGrid(newWidth, newHeight);
     };
-    
+
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) {
@@ -198,9 +269,9 @@ export default function LangtonLoops() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none"
-      style={{ 
+      style={{
         zIndex: 0,
-        opacity: 0.5, // 50% transparency for subtle effect
+        opacity: 0.5,
       }}
     />
   );
