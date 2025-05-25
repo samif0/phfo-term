@@ -21,9 +21,9 @@
 
 .writing-section {
     margin-bottom: 2rem;
-    /* Restrict to left third of viewport */
-    width: 33vw;
-    max-width: 600px;
+    /* Increased width for better readability */
+    width: 45vw;
+    max-width: 700px;
     /* align block to left portion */
     margin: 0 auto 2rem 0;
     text-align: left;
@@ -317,13 +317,45 @@
   font-family: inherit !important;
 }
 
+/* Markdown spacing for writings */
+.writing-text p {
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+}
+
+.writing-text h1,
+.writing-text h2,
+.writing-text h3,
+.writing-text h4,
+.writing-text h5,
+.writing-text h6 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.writing-text ul,
+.writing-text ol {
+  margin-bottom: 1.25rem;
+}
+
+.writing-text blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--foreground);
+  opacity: 0.8;
+}
+
+.writing-text pre {
+  margin: 1.5rem 0;
+}
+
 /* Center text on phones and tablets */
 @media (max-width: 1024px) {
   .writing-section,
   .thought-section,
   .program-section {
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto 2rem;
     text-align: center;
   }
