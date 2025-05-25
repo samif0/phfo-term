@@ -331,3 +331,116 @@
     text-align: center;
   }
 }
+
+/* Minimalist Program Styles */
+.program-section-minimal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  padding: 3rem 1.5rem;
+}
+
+.program-content-minimal {
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.program-description {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--foreground);
+  opacity: 0.9;
+  margin: 0;
+  text-align: center;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.program-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 400;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--foreground);
+  border-radius: 2rem;
+  transition: all 0.3s ease;
+  align-self: center;
+  opacity: 0.7;
+}
+
+.program-github-link:hover {
+  opacity: 1;
+  background-color: var(--foreground);
+  color: var(--background);
+  transform: translateY(-2px);
+}
+
+.github-icon {
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.program-github-link:hover .github-icon {
+  transform: translate(2px, -2px);
+}
+
+.video-container-minimal {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  background-color: #000;
+}
+
+.video-minimal {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .program-section-minimal {
+    min-height: calc(100vh - 100px);
+    padding: 2rem 1rem;
+  }
+  
+  .program-content-minimal {
+    gap: 2rem;
+  }
+  
+  .program-description {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  
+  .program-github-link {
+    font-size: 0.875rem;
+    padding: 0.625rem 1.25rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .video-container-minimal {
+    box-shadow: 0 10px 40px rgba(255, 255, 255, 0.05);
+  }
+  
+  .program-github-link {
+    opacity: 0.6;
+  }
+  
+  .program-github-link:hover {
+    opacity: 1;
+  }
+}

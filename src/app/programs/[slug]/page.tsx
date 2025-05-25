@@ -29,7 +29,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
   }
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <Program content={programData.content} videoName={programData.videoName} githubUrl={programData.githubUrl} />
       <GoBack />
     </div>
