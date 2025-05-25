@@ -1,7 +1,7 @@
 import Button from '@/components/btn';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import LangtonLoops from '@/components/langton-loops';
+import LangtonLoops from '@/components/Lreplicator';
 
 export default function Home() {
 
