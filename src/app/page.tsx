@@ -1,12 +1,15 @@
 import Button from '@/components/btn';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import LangtonLoops from '@/components/langton-loops';
 
 export default function Home() {
 
   return (
-    <div className="flex flex-col items-center min-h-screen pb-16 md:pb-20">
-      <div className="w-full max-w-3xl mt-12 self-start px-4 z-10 flex items-start gap-6">
+    <>
+      <LangtonLoops />
+      <div className="flex flex-col items-center min-h-screen pb-16 md:pb-20">
+        <div className="w-full max-w-3xl mt-12 self-start px-4 z-10 flex items-start gap-6">
         <div>
           <h1 className="text-3xl font-semibold text-gray-400">hello.</h1>
           <h2 className="mt-2 text-2xl text-gray-600">
@@ -70,5 +73,6 @@ export default function Home() {
         </Link>
       </div>
     </div>
+    </>
   );
 }

@@ -340,7 +340,7 @@ function animate() {
     boidPath.addPath(baseBoidPath, matrix);
   }
   // batch fill all boids once
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.fillStyle = "rgba(127, 127, 127, 0.7)";
   ctx.fill(boidPath);
 
   // end frame timer and notify main thread
@@ -409,11 +409,11 @@ self.onmessage = (e) => {
   }
 };
 
-// precompute a unit boid triangle shape
+// precompute a unit boid triangle shape (larger)
 const baseBoidPath = new Path2D();
-baseBoidPath.moveTo(2, 0);
-baseBoidPath.lineTo(-1, 1);
-baseBoidPath.lineTo(-1, -1);
+baseBoidPath.moveTo(4, 0);
+baseBoidPath.lineTo(-2, 2);
+baseBoidPath.lineTo(-2, -2);
 baseBoidPath.closePath();
 
 export {};

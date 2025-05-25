@@ -260,7 +260,7 @@
   }
 
   .mono-button--textColor {
-    color: white;
+    color: var(--foreground);
   }
   
   .mono-button::after {
