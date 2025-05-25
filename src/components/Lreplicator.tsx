@@ -197,23 +197,6 @@ export default function Lreplicator() {
       }
     }
 
-    // Draw grid lines for debugging (optional)
-    if (false) { // Set to true to see grid
-      ctx.strokeStyle = 'rgba(128, 128, 128, 0.1)';
-      ctx.lineWidth = 0.5;
-      for (let y = 0; y <= gridDimensions.height; y++) {
-        ctx.beginPath();
-        ctx.moveTo(0, y * CELL_SIZE);
-        ctx.lineTo(gridDimensions.width * CELL_SIZE, y * CELL_SIZE);
-        ctx.stroke();
-      }
-      for (let x = 0; x <= gridDimensions.width; x++) {
-        ctx.beginPath();
-        ctx.moveTo(x * CELL_SIZE, 0);
-        ctx.lineTo(x * CELL_SIZE, gridDimensions.height * CELL_SIZE);
-        ctx.stroke();
-      }
-    }
   };
 
   let frameCount = 0;
