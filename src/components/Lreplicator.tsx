@@ -25,7 +25,7 @@ const REPLICATOR = [
 export default function LangtonLoops() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridRef = useRef<number[][]>([]);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   
   const CELL_SIZE = 4;
   const GRID_SIZE = 200;
