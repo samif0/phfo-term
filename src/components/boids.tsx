@@ -186,10 +186,10 @@ export default function Boids() {
               return pts;
             } catch (err) {
               console.error('Failed to load image point cloud', err);
-              return getWordPointCloud("sami. f", wordFontSize, wordDensity);
+              return getWordPointCloud("sami f.", wordFontSize, wordDensity);
             }
           }
-          return getWordPointCloud("sami. f", wordFontSize, wordDensity);
+          return getWordPointCloud("sami f.", wordFontSize, wordDensity);
         }
 
         const sizeConfigs = {

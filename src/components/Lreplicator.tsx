@@ -35,26 +35,24 @@ export default function LangtonLoops() {
       Array(GRID_SIZE).fill(0)
     );
     
-    const bottomMargin = GRID_SIZE * 0.1;
-    const rightSideStart = GRID_SIZE * 0.2;
-    const buttonSpacing = GRID_SIZE * 0.2;
+    // Position replicators below the center text
+    const centerY = GRID_SIZE / 2;
+    const textOffsetY = GRID_SIZE * 0.15; // 15% below center
+    const textBottomY = centerY + textOffsetY;
     
-    const positions = [
-      { x: GRID_SIZE - rightSideStart - (buttonSpacing * 3), y: GRID_SIZE - bottomMargin },
-      { x: GRID_SIZE - rightSideStart - (buttonSpacing * 2), y: GRID_SIZE - bottomMargin },
-      { x: GRID_SIZE - rightSideStart - buttonSpacing, y: GRID_SIZE - bottomMargin },
-      { x: GRID_SIZE - rightSideStart, y: GRID_SIZE - bottomMargin },
-    ];
+    const rightMargin = GRID_SIZE * 0.1; // 10% margin from right edge
+    const rightSideStart = GRID_SIZE - rightMargin;
     
-    positions.forEach(pos => {
-      for (let y = 0; y < REPLICATOR.length; y++) {
-        for (let x = 0; x < REPLICATOR[y].length; x++) {
-          if (pos.y + y < GRID_SIZE && pos.x + x < GRID_SIZE) {
-            grid[pos.y + y][pos.x + x] = REPLICATOR[y][x];
-          }
+    // Single replicator starting from the right
+    const pos = { x: Math.floor(rightSideStart), y: Math.floor(textBottomY) };
+    
+    for (let y = 0; y < REPLICATOR.length; y++) {
+      for (let x = 0; x < REPLICATOR[y].length; x++) {
+        if (pos.y + y < GRID_SIZE && pos.x + x < GRID_SIZE) {
+          grid[pos.y + y][pos.x + x] = REPLICATOR[y][x];
         }
       }
-    });
+    }
     
     gridRef.current = grid;
   };
@@ -86,42 +84,54 @@ export default function LangtonLoops() {
   const applyRules = (grid: number[][], x: number, y: number): number => {
     const current = grid[y][x];
     
-    if (current === 1) return 1;
+    // Core cells remain core
+    const CORE_STATE = 1;
+    const ARM_STATE = 2;
     
-    if (current === 2) {
+    if (current === CORE_STATE) return CORE_STATE;
+    
+    if (current === ARM_STATE) {
+      // Check orthogonal neighbors (up, right, down, left)
       const neighbors = [
-        { dx: 0, dy: -1 },
-        { dx: 1, dy: 0 },
-        { dx: 0, dy: 1 },
-        { dx: -1, dy: 0 },
+        { dx: 0, dy: -1 },  // up
+        { dx: 1, dy: 0 },   // right
+        { dx: 0, dy: 1 },   // down
+        { dx: -1, dy: 0 },  // left
       ];
       
       for (const { dx, dy } of neighbors) {
         const nx = x + dx;
         const ny = y + dy;
         if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
-          if (grid[ny][nx] === 1) {
+          if (grid[ny][nx] === CORE_STATE) {
+            // Check if neighbor is to the right
             if (dx === 1 && dy === 0) {
-              if (y > 0 && x + 1 < GRID_SIZE && 
+              // Check if we can form an L-shape upward
+              const canFormLUp = y > 0 && x + 1 < GRID_SIZE && 
                   grid[y-1][x] === 0 && grid[y-1][x+1] === 0 &&
-                  grid[y][x+1] === 0) {
-                return 2;
+                  grid[y][x+1] === 0;
+              if (canFormLUp) {
+                return ARM_STATE;
               }
             }
+            // Check if neighbor is below
             if (dx === 0 && dy === 1) {
-              if (x > 0 && y + 1 < GRID_SIZE &&
+              // Check if we can form an L-shape to the left
+              const canFormLLeft = x > 0 && y + 1 < GRID_SIZE &&
                   grid[y][x-1] === 0 && grid[y+1][x-1] === 0 &&
-                  grid[y+1][x] === 0) {
-                return 2;
+                  grid[y+1][x] === 0;
+              if (canFormLLeft) {
+                return ARM_STATE;
               }
             }
           }
         }
       }
-      return 2;
+      return ARM_STATE;
     }
     
-    return 0;
+    const EMPTY_STATE = 0;
+    return EMPTY_STATE;
   };
 
   const updateGrid = () => {
@@ -136,49 +146,24 @@ export default function LangtonLoops() {
     
     const patternWidth = REPLICATOR[0].length;
     const patternHeight = REPLICATOR.length;
-    const spawnDistance = patternWidth + 1;
-    const clearanceRadius = 2;
+    const spawnDistance = patternWidth + 1; // Pattern width plus one cell gap
+    const clearanceRadius = Math.max(patternWidth, patternHeight); // Clearance based on pattern size
     
     for (let y = 0; y < GRID_SIZE - patternHeight; y++) {
       for (let x = 0; x < GRID_SIZE - patternWidth; x++) {
         if (hasPattern(grid, x, y, REPLICATOR)) {
-          if (x + spawnDistance + patternWidth < GRID_SIZE && y - 1 >= 0) {
+          // Only spawn to the left
+          if (x - spawnDistance - patternWidth >= 0) {
             let canSpawn = true;
-            for (let cy = y - clearanceRadius; cy <= y + clearanceRadius && canSpawn; cy++) {
-              for (let cx = x + spawnDistance; cx <= x + spawnDistance + patternWidth && canSpawn; cx++) {
+            for (let cy = y - clearanceRadius; cy <= y + patternHeight + clearanceRadius && canSpawn; cy++) {
+              for (let cx = x - spawnDistance - patternWidth; cx <= x - spawnDistance && canSpawn; cx++) {
                 if (cy >= 0 && cy < GRID_SIZE && cx >= 0 && cx < GRID_SIZE && grid[cy][cx] !== 0) {
                   canSpawn = false;
                 }
               }
             }
             if (canSpawn) {
-              placePattern(newGrid, x + spawnDistance, y - 1, REPLICATOR);
-            }
-          }
-          if (y - spawnDistance - patternHeight >= 0 && x - 1 >= 0) {
-            let canSpawn = true;
-            for (let cy = y - spawnDistance - patternHeight; cy <= y - spawnDistance && canSpawn; cy++) {
-              for (let cx = x - clearanceRadius; cx <= x + clearanceRadius && canSpawn; cx++) {
-                if (cy >= 0 && cy < GRID_SIZE && cx >= 0 && cx < GRID_SIZE && grid[cy][cx] !== 0) {
-                  canSpawn = false;
-                }
-              }
-            }
-            if (canSpawn) {
-              placePattern(newGrid, x - 1, y - spawnDistance - patternHeight, REPLICATOR);
-            }
-          }
-          if (x - spawnDistance >= 0 && y - spawnDistance >= 0) {
-            let canSpawn = true;
-            for (let cy = y - spawnDistance; cy <= y - spawnDistance + patternHeight && canSpawn; cy++) {
-              for (let cx = x - spawnDistance; cx <= x - spawnDistance + patternWidth && canSpawn; cx++) {
-                if (cy >= 0 && cy < GRID_SIZE && cx >= 0 && cx < GRID_SIZE && grid[cy][cx] !== 0) {
-                  canSpawn = false;
-                }
-              }
-            }
-            if (canSpawn) {
-              placePattern(newGrid, x - spawnDistance, y - spawnDistance, REPLICATOR);
+              placePattern(newGrid, x - spawnDistance - patternWidth, y, REPLICATOR);
             }
           }
         }
@@ -199,7 +184,9 @@ export default function LangtonLoops() {
     const isLight = document.documentElement.classList.contains('light');
     const colors = isLight ? COLORS_LIGHT : COLORS;
     
-    const leftBoundary = canvas.width / 3;
+    // Calculate boundaries based on viewport divisions
+    const viewportDivisions = 3;
+    const leftBoundary = canvas.width / viewportDivisions;
     const rightArea = canvas.width - leftBoundary;
     const viewWidth = Math.floor(rightArea / CELL_SIZE);
     const viewHeight = Math.floor(canvas.height / CELL_SIZE);
@@ -228,10 +215,12 @@ export default function LangtonLoops() {
   };
 
   let frameCount = 0;
+  const FRAMES_PER_UPDATE = 10; // Update grid every 10 frames
+  
   const animate = () => {
     frameCount++;
     
-    if (frameCount % 10 === 0) {
+    if (frameCount % FRAMES_PER_UPDATE === 0) {
       updateGrid();
     }
     
@@ -270,7 +259,7 @@ export default function LangtonLoops() {
       className="fixed inset-0 pointer-events-none"
       style={{ 
         zIndex: 0,
-        opacity: 0.5,
+        opacity: 0.5, // 50% transparency for subtle effect
       }}
     />
   );
