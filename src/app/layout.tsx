@@ -4,6 +4,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import BoidProfiler from "@/components/boidprofiler";
 import Boids from "@/components/boids";
+import { ThemeProvider } from "@/components/theme-provider";
+import ThemeToggle from "@/components/theme-toggle";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -36,12 +38,15 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
       </head>
-      <body className={`${deptnf.className} min-h-screen bg-black text-white antialiased`}>
-        <main className="flex min-h-screen flex-col">
-          <Boids />
-          {children}
-          <BoidProfiler />
-        </main>
+      <body className={`${deptnf.className} min-h-screen antialiased`}>
+        <ThemeProvider>
+          <ThemeToggle />
+          <main className="flex min-h-screen flex-col">
+            <Boids />
+            {children}
+            <BoidProfiler />
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );

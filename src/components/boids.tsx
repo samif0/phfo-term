@@ -325,7 +325,9 @@ export default function Boids() {
 
       return () => {
         // terminate worker on cleanup
-        worker.terminate();
+        if (typeof worker !== 'undefined' && worker) {
+          worker.terminate();
+        }
         window.removeEventListener('resize', debouncedResize);
         window.removeEventListener('mousemove', handleMouseMove);
         buttons.forEach((button) => {

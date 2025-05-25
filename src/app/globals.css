@@ -8,18 +8,19 @@ canvas {
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Default dark theme */
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.light {
+  /* Anthropic-inspired warm beige theme */
+  --background: #f4f1ed;
+  --foreground: #5d4e37;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }

@@ -206,12 +206,13 @@
   
   .mono-button--outline {
     background-color: transparent;
-    color: #1a1a1a;
-    border-color: #1a1a1a;
+    color: var(--foreground);
+    border-color: var(--foreground);
   }
   
   .mono-button--outline:hover {
-    background-color: rgba(198, 196, 196, 0.205);
+    background-color: var(--foreground);
+    color: var(--background);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transform: translateY(-1px);
   }
@@ -223,12 +224,14 @@
   
   .mono-button--ghost {
     background-color: transparent;
-    color: #1a1a1a;
+    color: var(--foreground);
     border-color: transparent;
   }
   
   .mono-button--ghost:hover {
-    background-color: rgba(26, 26, 26, 0.05);
+    background-color: var(--foreground);
+    color: var(--background);
+    opacity: 0.1;
     transform: translateY(-1px);
   }
   
