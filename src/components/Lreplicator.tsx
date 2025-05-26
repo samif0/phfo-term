@@ -31,6 +31,7 @@ export default function Lreplicator() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridRef = useRef<number[][]>([]);
   const animationRef = useRef<number | undefined>(undefined);
+  const dimensionsRef = useRef({ width: 0, height: 0 });
 
   const CELL_SIZE = 4;
   const [gridDimensions, setGridDimensions] = useState({ width: 0, height: 0 });
@@ -65,7 +66,7 @@ export default function Lreplicator() {
   };
 
   // Count neighbors of a specific state
-  const countNeighbors = (grid: number[][], x: number, y: number, state: number): number => {
+  const countNeighbors = (grid: number[][], x: number, y: number, state: number, width: number, height: number): number => {
     let count = 0;
     const directions = [
       [-1, 0], [1, 0], [0, -1], [0, 1], // von Neumann neighborhood
@@ -74,7 +75,7 @@ export default function Lreplicator() {
     for (const [dx, dy] of directions) {
       const nx = x + dx;
       const ny = y + dy;
-      if (nx >= 0 && nx < gridDimensions.width && ny >= 0 && ny < gridDimensions.height) {
+      if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
         if (grid[ny][nx] === state) count++;
       }
     }
@@ -83,29 +84,33 @@ export default function Lreplicator() {
   };
 
   // Check if position matches L-pattern corner
-  const isLCorner = (grid: number[][], x: number, y: number): boolean => {
+  const isLCorner = (grid: number[][], x: number, y: number, width: number, height: number): boolean => {
     // Check for L-shaped configuration in any rotation
+    // Returns true if this empty cell is at the corner of an L-shape
     const patterns = [
-      // Original L
-      { checks: [[0, 0, 1], [1, 0, 1], [0, 1, 1]], corner: [0, 0] },
-      // Rotated 90°
-      { checks: [[0, 0, 1], [-1, 0, 1], [0, 1, 1]], corner: [0, 0] },
-      // Rotated 180°
-      { checks: [[0, 0, 1], [-1, 0, 1], [0, -1, 1]], corner: [0, 0] },
-      // Rotated 270°
-      { checks: [[0, 0, 1], [1, 0, 1], [0, -1, 1]], corner: [0, 0] },
+      // Original L (corner at top-left)
+      { checks: [[1, 0, 1], [0, 1, 1]], corner: [0, 0] },
+      // Rotated 90° (corner at top-right)
+      { checks: [[-1, 0, 1], [0, 1, 1]], corner: [0, 0] },
+      // Rotated 180° (corner at bottom-right)
+      { checks: [[-1, 0, 1], [0, -1, 1]], corner: [0, 0] },
+      // Rotated 270° (corner at bottom-left)
+      { checks: [[1, 0, 1], [0, -1, 1]], corner: [0, 0] },
     ];
+
+    // Current position must be empty
+    if (grid[y][x] !== 0) return false;
 
     for (const pattern of patterns) {
       let matches = true;
       for (const [dx, dy, expected] of pattern.checks) {
         const nx = x + dx;
         const ny = y + dy;
-        if (nx < 0 || nx >= gridDimensions.width || ny < 0 || ny >= gridDimensions.height) {
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
           matches = false;
           break;
         }
-        if ((grid[ny][nx] === 1 ? 1 : 0) !== expected) {
+        if ((grid[ny][nx] === 1 || grid[ny][nx] === 3) ? 1 : 0 !== expected) {
           matches = false;
           break;
         }
@@ -117,32 +122,40 @@ export default function Lreplicator() {
   };
 
   // Update grid based on L-replicator rules
-  const updateGrid = () => {
+  const updateGrid = (width: number, height: number) => {
     const grid = gridRef.current;
     const newGrid: number[][] = [];
 
     // Copy grid
-    for (let y = 0; y < gridDimensions.height; y++) {
+    for (let y = 0; y < height; y++) {
       newGrid[y] = [...grid[y]];
     }
 
-    // Apply rules
-    for (let y = 0; y < gridDimensions.height; y++) {
-      for (let x = 0; x < gridDimensions.width; x++) {
+    // First pass: identify L-corners and create signals
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
         const current = grid[y][x];
-        const structureNeighbors = countNeighbors(grid, x, y, 1);
-        const signalNeighbors = countNeighbors(grid, x, y, 2);
-
-        // Rule 1: Empty cells become signals if they're at L-corners
-        if (current === 0) {
-          if (isLCorner(grid, x, y) && Math.random() < 0.01) {
+        
+        // Rule 1: Empty cells at L-corners become signals (increased probability)
+        if (current === 0 && isLCorner(grid, x, y, width, height)) {
+          if (Math.random() < 0.05) { // 5% chance instead of 1%
             newGrid[y][x] = 2; // Create signal
           }
         }
+      }
+    }
 
-        // Rule 2: Signals propagate and create new structures
-        else if (current === 2) {
-          newGrid[y][x] = 3; // Signal becomes new structure
+    // Second pass: apply other rules
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const current = grid[y][x];
+        const structureNeighbors = countNeighbors(grid, x, y, 1, width, height);
+        const signalNeighbors = countNeighbors(grid, x, y, 2, width, height);
+        const newNeighbors = countNeighbors(grid, x, y, 3, width, height);
+
+        // Rule 2: Signals decay after one step
+        if (current === 2) {
+          newGrid[y][x] = 0; // Signal disappears
         }
 
         // Rule 3: New structures mature into regular structures
@@ -158,9 +171,10 @@ export default function Lreplicator() {
         }
 
         // Rule 5: Empty cells with signal neighbors become new structures
+        // This creates the replication effect
         if (current === 0 && signalNeighbors > 0) {
-          // Only grow if it would extend an L-shape
-          if (structureNeighbors === 2) {
+          // Create new structure to form L-shapes
+          if (structureNeighbors === 1 || structureNeighbors === 2) {
             newGrid[y][x] = 3; // Grow new structure
           }
         }
@@ -170,7 +184,7 @@ export default function Lreplicator() {
     gridRef.current = newGrid;
   };
 
-  const draw = () => {
+  const draw = (width: number, height: number) => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
@@ -182,8 +196,8 @@ export default function Lreplicator() {
     const grid = gridRef.current;
 
     // Draw grid covering entire screen
-    for (let y = 0; y < gridDimensions.height; y++) {
-      for (let x = 0; x < gridDimensions.width; x++) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
         const state = grid[y][x];
         if (state !== 0) {
           ctx.fillStyle = colors[state];
@@ -196,21 +210,6 @@ export default function Lreplicator() {
         }
       }
     }
-
-  };
-
-  let frameCount = 0;
-  const FRAMES_PER_UPDATE = 30; // Slower updates for visibility
-
-  const animate = () => {
-    frameCount++;
-
-    if (frameCount % FRAMES_PER_UPDATE === 0) {
-      updateGrid();
-    }
-
-    draw();
-    animationRef.current = requestAnimationFrame(animate);
   };
 
   useEffect(() => {
@@ -224,7 +223,23 @@ export default function Lreplicator() {
     const width = Math.floor(window.innerWidth / CELL_SIZE);
     const height = Math.floor(window.innerHeight / CELL_SIZE);
     setGridDimensions({ width, height });
+    dimensionsRef.current = { width, height };
     initGrid(width, height);
+
+    let frameCount = 0;
+    const FRAMES_PER_UPDATE = 60; // Slower updates for better visibility of replication
+
+    const animate = () => {
+      frameCount++;
+
+      if (frameCount % FRAMES_PER_UPDATE === 0) {
+        updateGrid(dimensionsRef.current.width, dimensionsRef.current.height);
+      }
+
+      draw(dimensionsRef.current.width, dimensionsRef.current.height);
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
     animate();
 
     const handleResize = () => {
@@ -235,6 +250,7 @@ export default function Lreplicator() {
       const newWidth = Math.floor(window.innerWidth / CELL_SIZE);
       const newHeight = Math.floor(window.innerHeight / CELL_SIZE);
       setGridDimensions({ width: newWidth, height: newHeight });
+      dimensionsRef.current = { width: newWidth, height: newHeight };
       initGrid(newWidth, newHeight);
     };
 
