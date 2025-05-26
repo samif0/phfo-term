@@ -4,6 +4,9 @@ const nextConfig: NextConfig & { webpack?: Function } = {
   output: 'export',
   trailingSlash: true,
   distDir: 'build',
+  images: {
+    unoptimized: true,
+  },
   webpack(config, { isServer }) {
     // `isServer` is true when building the server bundle, false for the client bundle.
   // We only want to emit Web Worker assets for the client, so skip this rule during SSR.

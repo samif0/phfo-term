@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useMemo } from 'react';
+import { useTheme } from './theme-provider';
 
 
 // performance constants
@@ -95,11 +96,13 @@ function isScreenSize(size: 'small' | 'medium' | 'large'): boolean {
 
 
 export default function Boids() {
+    const { theme } = useTheme();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const boidsRef = useRef<Array<{ x: number; y: number; dx: number; dy: number, s: number, tx: number, ty: number}>>([]);
     const mousePositionRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 });
     const targetsPointRef = useRef<{ x: number; y: number }[]>([]);
-    const hoverTargetRef = useRef<{ x: number; y: number } | null>(null); 
+    const hoverTargetRef = useRef<{ x: number; y: number } | null>(null);
+    const workerRef = useRef<Worker | null>(null); 
     // Typed buffers stored in a ref to avoid re-allocating on every render/mount
     const buffersRef = useRef<{
       positionsX: Float32Array;
@@ -193,9 +196,9 @@ export default function Boids() {
         }
 
         const sizeConfigs = {
-          small: { imgDensity: imgD.small, wordFontSize: 100, wordDensity: wordD.small },
-          medium: { imgDensity: imgD.medium, wordFontSize: 200, wordDensity: wordD.medium },
-          large: { imgDensity: imgD.large, wordFontSize: 500, wordDensity: wordD.large },
+          small: { imgDensity: imgD.small, wordFontSize: 80, wordDensity: wordD.small },
+          medium: { imgDensity: imgD.medium, wordFontSize: 150, wordDensity: wordD.medium },
+          large: { imgDensity: imgD.large, wordFontSize: 300, wordDensity: wordD.large },
         };
 
         // always load a target point cloud: image (if available) or fallback word
@@ -266,6 +269,9 @@ export default function Boids() {
               }
             };
             initialized = true;
+            workerRef.current = worker;
+            // Send initial theme
+            worker.postMessage({ type: 'theme', isDark: theme === 'dark' });
           } else {
             worker.postMessage({ type: 'resize', width: canvas.width, height: canvas.height, targetPoints: targetsPointRef.current });
           }
@@ -337,6 +343,13 @@ export default function Boids() {
       }
       
     }, [pathname]);
+
+    // Update worker theme when theme changes
+    useEffect(() => {
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: 'theme', isDark: theme === 'dark' });
+      }
+    }, [theme]);
   
     return (
         <div>

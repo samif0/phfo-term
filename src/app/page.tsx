@@ -2,17 +2,27 @@ import Button from '@/components/btn';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import LangtonLoops from '@/components/Lreplicator';
+import Image from 'next/image';
 
 export default function Home() {
 
   return (
     <>
       <LangtonLoops />
+      <div className="fixed top-4 right-4 z-50">
+        <Image 
+          src="/images/pixelated-sami.png" 
+          alt="Sami" 
+          width={120} 
+          height={120}
+          className="rounded-lg shadow-lg"
+        />
+      </div>
       <div className="flex flex-col items-center min-h-screen pb-16 md:pb-20">
-        <div className="w-full max-w-3xl mt-12 self-start px-4 z-10 flex items-start gap-6">
+        <div className="w-full max-w-3xl mt-12 self-start px-4 z-10">
         <div>
           <h1 className="text-3xl font-semibold text-gray-400">hello.</h1>
-          <h2 className="mt-2 text-2xl text-gray-600">
+          <h2 className="mt-2 text-2xl" style={{ color: 'rgba(180, 90, 70, 0.9)' }}>
           software engineer @ AWS | RPI CS &apos;23
           
           </h2> 
@@ -24,7 +34,6 @@ export default function Home() {
           
           </p>
         </div>
-        
       </div>
 
       {/* Buttons row */}

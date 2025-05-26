@@ -15,7 +15,7 @@ export default function BoidProfiler() {
 
   return (
     <div className="fixed bottom-2 right-2 z-50 bg-black bg-opacity-50 text-xs text-white px-2 py-1 rounded">
-      Boid cycle: {frameTime.toFixed(1)} ms
+      {frameTime.toFixed(1)} ms
     </div>
   );
 }

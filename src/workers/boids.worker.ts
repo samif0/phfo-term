@@ -34,6 +34,9 @@ let hoverActive = false;
 let hoverX = 0;
 let hoverY = 0;
 
+// theme state
+let isDarkMode = true;
+
 // Spatial quadtree utility types
 class Rectangle {
   constructor(
@@ -340,7 +343,8 @@ function animate() {
     boidPath.addPath(baseBoidPath, matrix);
   }
   // batch fill all boids once
-  ctx.fillStyle = "rgba(127, 127, 127, 0.7)";
+  // Use reddish-brown color for light mode, lighter/whiter for dark mode
+  ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(150, 75, 60, 0.8)";
   ctx.fill(boidPath);
 
   // end frame timer and notify main thread
@@ -405,6 +409,9 @@ self.onmessage = (e) => {
       } else {
         hoverActive = false;
       }
+      break;
+    case "theme":
+      isDarkMode = data.isDark;
       break;
   }
 };
