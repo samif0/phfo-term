@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTheme } from './theme-provider';
 
 // States for minimal self-replicator
@@ -38,7 +38,6 @@ export default function Lreplicator() {
     const themeRef = useRef(theme);
 
     const CELL_SIZE = 8; // Larger cells for less density
-    const [gridDimensions, setGridDimensions] = useState({ width: 0, height: 0 });
 
     // Initialize grid with a single seed
     const initGrid = (width: number, height: number) => {
@@ -158,7 +157,6 @@ export default function Lreplicator() {
         // Calculate grid dimensions based on screen size
         const width = Math.floor(window.innerWidth / CELL_SIZE);
         const height = Math.floor(window.innerHeight / CELL_SIZE);
-        setGridDimensions({ width, height });
         dimensionsRef.current = { width, height };
         initGrid(width, height);
 
@@ -185,7 +183,6 @@ export default function Lreplicator() {
             // Recalculate grid dimensions
             const newWidth = Math.floor(window.innerWidth / CELL_SIZE);
             const newHeight = Math.floor(window.innerHeight / CELL_SIZE);
-            setGridDimensions({ width: newWidth, height: newHeight });
             dimensionsRef.current = { width: newWidth, height: newHeight };
             initGrid(newWidth, newHeight);
         };
