@@ -33,12 +33,12 @@ export default async function WritingsPage() {
         {/* This Month Section */}
         {thisMonthWritings.length > 0 && (
           <div className="flex flex-col items-center gap-4">
-            <h2 className="text-xl font-semibold text-white mb-2">This Month</h2>
+            <h2 className="text-xl font-semibold mb-2">recent</h2>
             {thisMonthWritings.map((writing) => (
               <Link 
                 key={writing.slug}
                 href={`/writings/${writing.slug}`} 
-                className="text-white hover:text-gray-300"
+                className="hover:opacity-70 transition-opacity"
               >
                 <Button text={writing.title} variant="outline" size="medium" icon={<ArrowRightIcon className="h-3 w-3" />} iconPosition="right" />
               </Link>
@@ -54,12 +54,12 @@ export default async function WritingsPage() {
         {/* Previous Posts Section */}
         {previousWritings.length > 0 && (
           <div className="flex flex-col items-center gap-4">
-            <h2 className="text-xl font-semibold text-white mb-2">Previous Posts</h2>
+            <h2 className="text-xl font-semibold mb-2">previous</h2>
             {previousWritings.map((writing) => (
               <Link 
                 key={writing.slug}
                 href={`/writings/${writing.slug}`} 
-                className="text-white hover:text-gray-300"
+                className="hover:opacity-70 transition-opacity"
               >
                 <Button text={writing.title} variant="outline" size="medium" icon={<ArrowRightIcon className="h-3 w-3" />} iconPosition="right" />
               </Link>
