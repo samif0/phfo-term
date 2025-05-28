@@ -6,6 +6,7 @@ import BoidProfiler from "@/components/boidprofiler";
 import Boids from "@/components/boids";
 import { ThemeProvider } from "@/components/theme-provider";
 import ThemeToggle from "@/components/theme-toggle";
+import Copyright from "@/components/copyright";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -43,12 +44,10 @@ export default function RootLayout({
           <ThemeToggle />
           <main className="flex min-h-screen flex-col">
             <Boids />
-            <div className="flex-grow">
+            <div className="flex-grow pb-16">
               {children}
             </div>
-            <footer className="text-center py-4 text-sm opacity-70">
-              © 2025 Sami Fawcett
-            </footer>
+            <Copyright />
             <BoidProfiler />
           </main>
         </ThemeProvider>
