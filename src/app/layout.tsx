@@ -43,7 +43,12 @@ export default function RootLayout({
           <ThemeToggle />
           <main className="flex min-h-screen flex-col">
             <Boids />
-            {children}
+            <div className="flex-grow">
+              {children}
+            </div>
+            <footer className="text-center py-4 text-sm opacity-70">
+              © 2025 Sami Fawcett
+            </footer>
             <BoidProfiler />
           </main>
         </ThemeProvider>
