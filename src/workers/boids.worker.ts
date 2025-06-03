@@ -140,6 +140,10 @@ let qt: Quadtree;
 // reusable array for neighbor search results
 const foundPoints: { x: number; y: number; idx: number }[] = [];
 
+// animation state
+let animationStartTime = 0;
+let fadeInDuration = 2000; // 2 seconds fade in
+
 function initBuffers() {
   const N = targetPoints.length;
   positionsX = new Float32Array(N);
@@ -161,15 +165,37 @@ function initBuffers() {
   }
   targetBitmap = tgtCanvas.transferToImageBitmap();
 
+  // Start boids from center with aesthetic burst pattern
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const burstRadius = 20; // tighter starting cluster
+  
   for (let i = 0; i < N; i++) {
-    // start boids at random positions
-    positionsX[i] = Math.random() * canvas.width;
-    positionsY[i] = Math.random() * canvas.height;
-    velocitiesX[i] = Math.random() * 2 - 1;
-    velocitiesY[i] = Math.random() * 2 - 1;
+    // Create a spiral/flower pattern using golden angle
+    const t = i / N;
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // golden ratio angle
+    const angle = i * goldenAngle;
+    const spiralRadius = Math.sqrt(i / N) * burstRadius;
+    
+    // Start position with slight spiral
+    positionsX[i] = centerX + Math.cos(angle) * spiralRadius;
+    positionsY[i] = centerY + Math.sin(angle) * spiralRadius;
+    
+    // Create wave-like burst with varying speeds - more controlled
+    const wavePhase = t * Math.PI * 4; // creates 2 full waves
+    const waveFactor = 0.5 + 0.5 * Math.sin(wavePhase);
+    const burstSpeed = (4 + waveFactor * 6) * (0.7 + 0.3 * Math.random());
+    
+    // Add slight perpendicular component for spiral motion
+    const perpAngle = angle + Math.PI / 2;
+    const spiralFactor = 0.2;
+    
+    velocitiesX[i] = Math.cos(angle) * burstSpeed + Math.cos(perpAngle) * burstSpeed * spiralFactor;
+    velocitiesY[i] = Math.sin(angle) * burstSpeed + Math.sin(perpAngle) * burstSpeed * spiralFactor;
+    
     targetsX[i] = targetPoints[i].x;
     targetsY[i] = targetPoints[i].y;
-    states[i] = Math.round(Math.random() * 3);
+    states[i] = i % 4; // more varied states for visual groups
   }
 }
 
@@ -180,6 +206,10 @@ function animate() {
   // start frame timer
   const frameStart = performance.now();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // calculate fade-in alpha
+  const elapsed = frameStart - animationStartTime;
+  const fadeAlpha = Math.min(1, elapsed / fadeInDuration);
 
   // prepare path for all boids to batch draw using precomputed shape
   const boidPath = new Path2D();
@@ -268,7 +298,7 @@ function animate() {
         targetForceY = Math.sin(angle);
       }
     } else {
-      // normal attraction towards shape
+      // Enhanced attraction towards shape with easing
       const tx = targetsX[index];
       const ty = targetsY[index];
       const toTargetX = tx - boidX;
@@ -278,7 +308,15 @@ function animate() {
       if (distSq > epsSq) {
         const distToTarget = Math.sqrt(distSq);
         if (Number.isFinite(distToTarget) && distToTarget > 0) {
-          const invDist = 2.0 / distToTarget;
+          // Dynamic attraction based on distance and time
+          const timeElapsed = (performance.now() - animationStartTime) / 1000; // in seconds
+          const timeFactor = Math.min(1, timeElapsed / 8); // slow ramp up over 8 seconds
+          
+          // Gentle pull that preserves boid behavior
+          const distanceFactor = Math.min(2, distToTarget / 100);
+          const easedPull = distanceFactor * (1.5 - distanceFactor * 0.25); // gentler curve
+          
+          const invDist = (0.8 + timeFactor * 1.2) * easedPull / distToTarget;
           targetForceX = toTargetX * invDist;
           targetForceY = toTargetY * invDist;
         }
@@ -299,7 +337,7 @@ function animate() {
     const separationWeight = 0.5;
     const alignmentWeight = 0.1;
     const cohesionWeight = 0.2;
-    const targetWeight = 0.5;
+    const targetWeight = 0.6; // slightly increased from 0.5
     const mouseWeight = 2;
     // apply stronger attraction if hovering
     const tw = hoverActive ? 1.0 : targetWeight;
@@ -328,23 +366,32 @@ function animate() {
     }
     positionsX[index] += velocitiesX[index];
     positionsY[index] += velocitiesY[index];
+    
+    // Normal wrapping behavior
     const buffer = 10;
     if (positionsX[index] > canvas.width + buffer) positionsX[index] = -buffer;
     if (positionsX[index] < -buffer) positionsX[index] = canvas.width + buffer;
     if (positionsY[index] > canvas.height + buffer) positionsY[index] = -buffer;
     if (positionsY[index] < -buffer) positionsY[index] = canvas.height + buffer;
-    // add transformed base triangle shape
+    // add transformed base triangle shape with size variation
     const x = positionsX[index],
       y = positionsY[index];
     const angle = Math.atan2(velocitiesY[index], velocitiesX[index]);
+    
+    // Size variation based on state and slight randomness
+    const sizeVar = 0.8 + (states[index] * 0.1) + Math.sin(index * 0.5) * 0.2;
+    
     const c = Math.cos(angle),
       s = Math.sin(angle);
-    const matrix = new DOMMatrix([c, s, -s, c, x, y]);
+    const matrix = new DOMMatrix([c * sizeVar, s * sizeVar, -s * sizeVar, c * sizeVar, x, y]);
     boidPath.addPath(baseBoidPath, matrix);
   }
-  // batch fill all boids once
+  // batch fill all boids once with fade-in
   // Use reddish-brown color for light mode, lighter/whiter for dark mode
-  ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(150, 75, 60, 0.8)";
+  const baseAlpha = 0.8 * fadeAlpha;
+  ctx.fillStyle = isDarkMode 
+    ? `rgba(255, 255, 255, ${baseAlpha})` 
+    : `rgba(150, 75, 60, ${baseAlpha})`;
   ctx.fill(boidPath);
 
   // end frame timer and notify main thread
@@ -380,6 +427,7 @@ self.onmessage = (e) => {
         16,
       );
       lastFrameTime = performance.now();
+      animationStartTime = performance.now();
       animate();
       break;
     case "resize":

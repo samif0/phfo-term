@@ -8,7 +8,7 @@ export default function HomeButton() {
   const router = useRouter();
 
   return (
-    <div className="fixed top-4 left-4 z-50">
+    <div className="fixed bottom-4 left-20 z-50">
       <button
         onClick={() => router.push('/')}
         className="p-2 bg-gray-800 text-white hover:bg-gray-700 rounded-lg transition-colors duration-200 flex items-center gap-2"

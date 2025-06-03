@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import GoBack from '@/components/goback';
+import NavigationButton from '@/components/navigation-button';
 import Program from '@/components/program';
 import { getAllPrograms, getProgram } from '@/lib/data/programs';
 
@@ -31,7 +31,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Program content={programData.content} videoName={programData.videoName} githubUrl={programData.githubUrl} />
-      <GoBack />
+      <NavigationButton />
     </div>
   )
 }

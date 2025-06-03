@@ -1,5 +1,3 @@
-import HomeButton from "@/components/home-button";
-
 export default function ThoughtsLayout({
   children,
 }: Readonly<{
@@ -7,7 +5,6 @@ export default function ThoughtsLayout({
 }>) {
   return (
     <section>
-      <HomeButton />
       {children}
     </section>
   );

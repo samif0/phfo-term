@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Thought from '@/components/thought';
 import { getAllThoughts, getThought } from '@/lib/data/thoughts';
-import GoBack from '@/components/goback';
+import NavigationButton from '@/components/navigation-button';
 
 export const revalidate = 60;
 
@@ -31,7 +31,7 @@ export default async function ThoughtPage({ params }: ThoughtPageProps) {
   return (
     <div>
       <Thought content={thoughtData.content} date={thoughtData.date} />
-      <GoBack />
+      <NavigationButton />
     </div>
   )
 }

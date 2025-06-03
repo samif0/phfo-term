@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import GoBack from '@/components/goback';
+import NavigationButton from '@/components/navigation-button';
 import { getAllWritings } from '@/lib/data/writings';
 import Button from '@/components/btn';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
@@ -67,7 +67,7 @@ export default async function WritingsPage() {
           </div>
         )}
       </div>
-      <GoBack />
+      <NavigationButton />
     </div>
   )
 }

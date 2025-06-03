@@ -222,15 +222,37 @@ export default function Boids() {
             neighborPoolLength: 0,
           };
           const buf = buffersRef.current;
-          // initialize buffers
+          // initialize buffers - start boids from center with aesthetic burst pattern
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const burstRadius = 20; // tighter starting cluster
+          
           for (let i = 0; i < N; i++) {
-            buf.positionsX[i] = Math.random() * canvas.width;
-            buf.positionsY[i] = Math.random() * canvas.height;
-            buf.velocitiesX[i] = (Math.random() * 2 - 1);
-            buf.velocitiesY[i] = (Math.random() * 2 - 1);
+            // Create a spiral/flower pattern
+            const t = i / N;
+            const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // golden ratio angle
+            const angle = i * goldenAngle;
+            const spiralRadius = Math.sqrt(i / N) * burstRadius;
+            
+            // Start position with slight spiral
+            buf.positionsX[i] = centerX + Math.cos(angle) * spiralRadius;
+            buf.positionsY[i] = centerY + Math.sin(angle) * spiralRadius;
+            
+            // Create wave-like burst with varying speeds - more controlled
+            const wavePhase = t * Math.PI * 4; // creates 2 full waves
+            const waveFactor = 0.5 + 0.5 * Math.sin(wavePhase);
+            const burstSpeed = (4 + waveFactor * 6) * (0.7 + 0.3 * Math.random());
+            
+            // Add slight perpendicular component for spiral motion
+            const perpAngle = angle + Math.PI / 2;
+            const spiralFactor = 0.2;
+            
+            buf.velocitiesX[i] = Math.cos(angle) * burstSpeed + Math.cos(perpAngle) * burstSpeed * spiralFactor;
+            buf.velocitiesY[i] = Math.sin(angle) * burstSpeed + Math.sin(perpAngle) * burstSpeed * spiralFactor;
+            
             buf.targetsX[i] = targetsPointRef.current[i].x;
             buf.targetsY[i] = targetsPointRef.current[i].y;
-            buf.states[i] = Math.round(Math.random() * 3);
+            buf.states[i] = i % 4; // more varied states for color groups
           }
           // notify worker of resize and new targets
           if (!initialized) {

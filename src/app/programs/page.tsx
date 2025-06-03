@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import GoBack from '@/components/goback';
+import NavigationButton from '@/components/navigation-button';
 import { getAllPrograms } from '@/lib/data/programs';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import Button from '@/components/btn';
@@ -21,7 +21,7 @@ export default async function ProgramsPage() {
           </Link>
         ))}
       </div>
-      <GoBack />
+      <NavigationButton />
     </div>
     )    
 }

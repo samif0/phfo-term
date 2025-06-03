@@ -7,6 +7,7 @@ import Boids from "@/components/boids";
 import { ThemeProvider } from "@/components/theme-provider";
 import ThemeToggle from "@/components/theme-toggle";
 import Copyright from "@/components/copyright";
+import NavigationTracker from "@/components/navigation-tracker";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -41,6 +42,7 @@ export default function RootLayout({
       </head>
       <body className={`${deptnf.className} min-h-screen antialiased`}>
         <ThemeProvider>
+          <NavigationTracker />
           <ThemeToggle />
           <main className="flex min-h-screen flex-col">
             <Boids />

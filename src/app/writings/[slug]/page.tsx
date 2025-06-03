@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Writing from '@/components/writing';
-import GoBack from '@/components/goback';
+import NavigationButton from '@/components/navigation-button';
 import { getAllWritings, getWriting } from '@/lib/data/writings';
 
 export const revalidate = 60;
@@ -30,7 +30,7 @@ export default async function WritingPage({ params }: WritingPageProps) {
   return (
     <div>
       <Writing title={writingData.title} content={writingData.content} date={writingData.date} />
-      <GoBack />
+      <NavigationButton />
     </div>
   )
 }
