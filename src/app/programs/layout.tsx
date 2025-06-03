@@ -1,3 +1,5 @@
+import HomeButton from "@/components/home-button";
+
 export default function ProgramsLayout({
   children,
 }: Readonly<{
@@ -5,6 +7,7 @@ export default function ProgramsLayout({
 }>) {
   return (
     <section>
+      <HomeButton />
       {children}
     </section>
   );

@@ -1,3 +1,5 @@
+import HomeButton from "@/components/home-button";
+
 export default function WritingsLayout({
   children,
 }: Readonly<{
@@ -5,6 +7,7 @@ export default function WritingsLayout({
 }>) {
   return (
     <section>
+      <HomeButton />
       {children}
     </section>
   );
