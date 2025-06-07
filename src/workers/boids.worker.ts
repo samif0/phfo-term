@@ -477,9 +477,9 @@ self.onmessage = (e) => {
 
 // precompute a unit boid triangle shape (larger)
 const baseBoidPath = new Path2D();
-baseBoidPath.moveTo(4, 0);
-baseBoidPath.lineTo(-2, 2);
-baseBoidPath.lineTo(-2, -2);
+baseBoidPath.moveTo(3, 0);
+baseBoidPath.lineTo(-1.5, 1.5);
+baseBoidPath.lineTo(-1.5, -1.5);
 baseBoidPath.closePath();
 
 export {};

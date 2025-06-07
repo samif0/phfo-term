@@ -167,8 +167,8 @@ export default function Boids() {
 
         let updated = false;
         const wordD = { small: 3, medium: 4, large: 5 };
-        const imgD = { small: 3, medium: 3, large: 2};
-        const MAX_IMG_POINTS = 5000;
+        const imgD = { small: 3, medium: 4, large: 5};
+        const MAX_IMG_POINTS = 3000;
         // pick image src by matching route prefix
         const keys = Object.keys(imageMap);
         const matchKey = keys.find(key => route.startsWith(key));
@@ -238,12 +238,10 @@ export default function Boids() {
             buf.positionsX[i] = centerX + Math.cos(angle) * spiralRadius;
             buf.positionsY[i] = centerY + Math.sin(angle) * spiralRadius;
             
-            // Create wave-like burst with varying speeds - more controlled
-            const wavePhase = t * Math.PI * 4; // creates 2 full waves
+            const wavePhase = t * Math.PI * 4; 
             const waveFactor = 0.5 + 0.5 * Math.sin(wavePhase);
             const burstSpeed = (4 + waveFactor * 6) * (0.7 + 0.3 * Math.random());
             
-            // Add slight perpendicular component for spiral motion
             const perpAngle = angle + Math.PI / 2;
             const spiralFactor = 0.2;
             
@@ -347,8 +345,6 @@ export default function Boids() {
         button.addEventListener('mouseleave', onLeave);
       });
       
-      // local animation and buffers replaced by web worker
-      // initial load triggers resizeCanvas which notifies worker
       resizeCanvas();
 
       return () => {
