@@ -9,7 +9,7 @@ const CELL_SIZE = 8;
 export default function GameOfLife({ isRunning, isPaused }: PlaygroundControls) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridRef = useRef<boolean[][]>([]);
-  const animationRef = useRef<number | undefined>();
+  const animationRef = useRef<number | undefined>(undefined);
   const lastUpdateRef = useRef<number>(0);
   const generationRef = useRef<number>(0);
   const isPausedRef = useRef<boolean>(false);

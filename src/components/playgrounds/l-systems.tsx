@@ -80,7 +80,7 @@ const L_SYSTEMS: Record<string, LSystemConfig> = {
 
 export default function LSystems({ isRunning, isPaused }: PlaygroundControls) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number | undefined>();
+  const animationRef = useRef<number | undefined>(undefined);
   const lastUpdateRef = useRef<number>(0);
   const currentStepRef = useRef<number>(0);
   const isPausedRef = useRef<boolean>(false);
