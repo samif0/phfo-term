@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import BoidProfiler from "@/components/boidprofiler";
-import Boids from "@/components/boids";
 import { ThemeProvider } from "@/components/theme-provider";
 import ThemeToggle from "@/components/theme-toggle";
 import Copyright from "@/components/copyright";
@@ -45,7 +44,6 @@ export default function RootLayout({
           <NavigationTracker />
           <ThemeToggle />
           <main className="flex min-h-screen flex-col">
-            <Boids />
             <div className="flex-grow pb-16">
               {children}
             </div>

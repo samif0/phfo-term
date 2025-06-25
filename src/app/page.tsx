@@ -3,11 +3,13 @@ import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import LangtonLoops from '@/components/Lreplicator';
 import Image from 'next/image';
+import Boids from '@/components/boids';
 
 export default function Home() {
 
   return (
     <>
+      <Boids />
       <LangtonLoops />
       <div className="fixed top-4 right-4 z-50">
         <Image 
@@ -72,6 +74,20 @@ export default function Home() {
               <>
                 <span className="hidden md:inline">programs</span>
                 <span className="inline md:hidden">prog.</span>
+              </>
+            }
+            variant="outline"
+            size="medium"
+            icon={<ArrowRightIcon className="h-3 w-3" />}
+            iconPosition="right"
+          />
+        </Link>
+        <Link href="/playground" className="text-white hover:text-gray-300 z-10">
+          <Button
+            text={
+              <>
+                <span className="hidden md:inline">playground</span>
+                <span className="inline md:hidden">play.</span>
               </>
             }
             variant="outline"

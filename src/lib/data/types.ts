@@ -18,3 +18,9 @@ export interface ProgramData {
   videoName?: string; //TODO: move resources from public assets to S3 in the future
   githubUrl?: string;
 }
+
+export interface PlaygroundData {
+  slug: string;
+  content: string;
+  githubUrl?: string;
+}

@@ -3,6 +3,7 @@ import NavigationButton from '@/components/navigation-button';
 import { getAllWritings } from '@/lib/data/writings';
 import Button from '@/components/btn';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
+import Boids from '@/components/boids';
 
 export const revalidate = 60;
 
@@ -29,6 +30,7 @@ export default async function WritingsPage() {
   
   return (
     <div className="min-h-screen relative">
+      <Boids />
       <div className="flex flex-col items-center justify-center min-h-screen gap-8 py-12">
         {/* This Month Section */}
         {thisMonthWritings.length > 0 && (

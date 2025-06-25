@@ -19,8 +19,16 @@ canvas {
   --foreground: #5d4e37;
 }
 
+html {
+  background: var(--background);
+  overflow: hidden;
+  height: 100%;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow: hidden;
+  height: 100%;
 }
