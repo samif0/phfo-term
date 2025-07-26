@@ -1,0 +1,48 @@
+name: 'Manage Runner IP in Security Group'
+description: 'Add and remove the GitHub Actions runner IP to an AWS EC2 Security Group'
+
+inputs:
+  aws-region:
+    description: 'The AWS region of the security group'
+    required: true
+  security-group-id:
+    description: 'The ID of the security group'
+    required: true
+  port:
+    description: 'The port to open in the security group'
+    required: true
+  protocol:
+    description: 'The protocol for the ingress rule (e.g., tcp, udp, icmp)'
+    required: false
+    default: 'tcp'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get Runner IP
+      id: get-ip
+      shell: bash
+      run: echo "runner-ip=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_OUTPUT
+
+    - name: Add IP to Security Group
+      id: add-ip
+      shell: bash
+      run: |
+        aws ec2 authorize-security-group-ingress \
+          --region ${{ inputs.aws-region }} \
+          --group-id ${{ inputs.security-group-id }} \
+          --protocol ${{ inputs.protocol }} \
+          --port ${{ inputs.port }} \
+          --cidr ${{ steps.get-ip.outputs.runner-ip }}/32
+
+    - name: Remove IP from Security Group on Job Cleanup
+      id: remove-ip
+      if: always()
+      shell: bash
+      run: |
+        aws ec2 revoke-security-group-ingress \
+          --region ${{ inputs.aws-region }} \
+          --group-id ${{ inputs.security-group-id }} \
+          --protocol ${{ inputs.protocol }} \
+          --port ${{ inputs.port }} \
+          --cidr ${{ steps.get-ip.outputs.runner-ip }}/32
