@@ -14,8 +14,9 @@ fi
 nvm install 22
 nvm use 22
 
-# Install global tools and dependencies without sudo so nvm's Node is used
-npm install -g pnpm@8 pm2
 
-# Install dependencies using the lockfile without modification
-pnpm install --frozen-lockfile
+# Install global tools and dependencies
+sudo npm install -g pnpm@8 pm2
+sudo rm -f pnpm-lock.yaml
+pnpm install
+
