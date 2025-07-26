@@ -62,7 +62,13 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           script: |
+            if [ ! -d "$HOME/.nvm" ]; then
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+            fi
+            . "$HOME/.nvm/nvm.sh"
+            nvm install 22
+            nvm use 22
             cd ~/app
-            npm install -g pm2
+            npm install -g pnpm pm2
             pnpm install
-            pm2 restart app || pm2 start npm --name "app" -- start
+            pm2 restart app || pm2 start pnpm --name "app" -- start
