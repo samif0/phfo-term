@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
-cd /home/ec2-user/app
+APP_DIR=/home/ec2-user/app
+# Ensure the deployment directory is owned by ec2-user
+sudo chown -R ec2-user:ec2-user "$APP_DIR"
+cd "$APP_DIR"
+
 
 # Install nvm if not present
 if [ ! -d "$HOME/.nvm" ]; then
@@ -12,7 +16,6 @@ nvm install 22
 nvm use 22
 
 # Install global tools and dependencies
-npm install -g pnpm@8 pm2
+sudo npm install -g pnpm@8 pm2
 sudo rm -f pnpm-lock.yaml
 pnpm install
-
