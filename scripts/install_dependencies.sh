@@ -5,7 +5,6 @@ APP_DIR=/home/ec2-user/app
 sudo chown -R ec2-user:ec2-user "$APP_DIR"
 cd "$APP_DIR"
 
-
 # Install nvm if not present
 if [ ! -d "$HOME/.nvm" ]; then
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
@@ -15,7 +14,9 @@ fi
 nvm install 22
 nvm use 22
 
+
 # Install global tools and dependencies
 sudo npm install -g pnpm@8 pm2
 sudo rm -f pnpm-lock.yaml
 pnpm install
+
