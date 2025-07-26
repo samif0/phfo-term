@@ -1,4 +1,4 @@
-import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { ScanCommand, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getDocClient } from '../dynamodb';
 import { WritingData } from "./types";
 
@@ -61,4 +61,20 @@ export async function getWriting(slug: string): Promise<WritingData | undefined>
     console.error(`Failed to fetch writing ${slug}:`, error);
     return undefined;
   }
+}
+
+export async function createWriting(slug: string, title: string, content: string, date: string): Promise<void> {
+  const client = getDocClient();
+  const command = new PutCommand({
+    TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+    Item: {
+      '{contentType}#{slug}': `writing#${slug}`,
+      metadata: 'metadata',
+      slug,
+      title,
+      content,
+      date,
+    },
+  });
+  await client.send(command);
 }

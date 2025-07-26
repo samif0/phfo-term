@@ -1,6 +1,7 @@
 import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { getDocClient } from '../dynamodb';
 import { ThoughtData } from "./types";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export async function getAllThoughts(): Promise<ThoughtData[]> {
   const client = getDocClient();
@@ -57,4 +58,19 @@ export async function getThought(slug: string): Promise<ThoughtData | undefined>
     console.error(`Failed to fetch thought ${slug}:`, error);
     return undefined;
   }
+}
+
+export async function createThought(slug: string, content: string, date: string): Promise<void> {
+  const client = getDocClient();
+  const command = new PutCommand({
+    TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+    Item: {
+      '{contentType}#{slug}': `thought#${slug}`,
+      metadata: 'metadata',
+      slug,
+      content,
+      date,
+    },
+  });
+  await client.send(command);
 }
