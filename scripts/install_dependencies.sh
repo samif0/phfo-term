@@ -16,7 +16,7 @@ nvm use 22
 
 
 # Install global tools and dependencies
-sudo npm install -g pnpm@8 pm2
-sudo rm -f pnpm-lock.yaml
+npm install -g pnpm@8 pm2
+rm -f pnpm-lock.yaml
 pnpm install
 
