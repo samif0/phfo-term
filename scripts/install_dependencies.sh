@@ -13,4 +13,6 @@ nvm use 22
 
 # Install global tools and dependencies
 npm install -g pnpm@8 pm2
-pnpm install --frozen-lockfile
+sudo rm -f pnpm-lock.yaml
+pnpm install
+
