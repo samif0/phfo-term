@@ -46,6 +46,17 @@ jobs:
           DYNAMODB_DATA_TABLE_NAME: ${{ secrets.DYNAMODB_DATA_TABLE_NAME }}
         run: pnpm build
 
+      - name: Authorize GitHub Actions IP
+        uses: sohel-arman/action-sg-rule@v1
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          security_group_id: ${{ secrets.EC2_SECURITY_GROUP_ID }}
+          protocol: tcp
+          port: 22
+          action: add
+
       - name: Deploy to EC2
         uses: appleboy/scp-action@master
         with:
@@ -74,3 +85,15 @@ jobs:
             rm -f pnpm-lock.yaml
             pnpm install
             pm2 restart app || pm2 start pnpm --name "app" -- start
+
+      - name: Revoke GitHub Actions IP
+        if: always()
+        uses: sohel-arman/action-sg-rule@v1
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          security_group_id: ${{ secrets.EC2_SECURITY_GROUP_ID }}
+          protocol: tcp
+          port: 22
+          action: remove
