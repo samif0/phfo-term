@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig & { webpack?: Function } = {
-  output: 'export',
   trailingSlash: true,
   distDir: 'build',
   images: {
