@@ -10,7 +10,7 @@ export async function getAllPrograms(): Promise<ProgramData[]> {
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       FilterExpression: "begins_with(#pk, :prefix)",
       ExpressionAttributeNames: {
-        "#pk": "{contentType}#{slug}",
+        "#pk": "pk",
       },
       ExpressionAttributeValues: {
         ":prefix": "program#",
@@ -38,8 +38,8 @@ export async function getProgram(slug: string): Promise<ProgramData | undefined>
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       Key: {
-        '{contentType}#{slug}': `program#${slug}`,
-        'metadata': "metadata",
+        pk: `program#${slug}`,
+        metadata: "metadata",
       },
     });
     

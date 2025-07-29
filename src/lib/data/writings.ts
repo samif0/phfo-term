@@ -10,7 +10,7 @@ export async function getAllWritings(): Promise<WritingData[]> {
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       FilterExpression: "begins_with(#pk, :prefix)",
       ExpressionAttributeNames: {
-        "#pk": "{contentType}#{slug}"
+        "#pk": "pk",
       },
       ExpressionAttributeValues: {
         ":prefix": "writing#",
@@ -38,8 +38,8 @@ export async function getWriting(slug: string): Promise<WritingData | undefined>
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       Key: {
-        '{contentType}#{slug}': `writing#${slug}`,
-        'metadata': "metadata",
+        pk: `writing#${slug}`,
+        metadata: "metadata",
       },
     });
 

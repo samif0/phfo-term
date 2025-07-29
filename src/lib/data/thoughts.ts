@@ -10,7 +10,7 @@ export async function getAllThoughts(): Promise<ThoughtData[]> {
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       FilterExpression: "begins_with(#pk, :prefix)",
       ExpressionAttributeNames: {
-        "#pk": "{contentType}#{slug}",
+        "#pk": "pk",
       },
       ExpressionAttributeValues: {
         ":prefix": "thought#",
@@ -37,8 +37,8 @@ export async function getThought(slug: string): Promise<ThoughtData | undefined>
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       Key: {
-        '{contentType}#{slug}': `thought#${slug}`,
-        'metadata': "metadata",
+        pk: `thought#${slug}`,
+        metadata: "metadata",
       },
     });
     
