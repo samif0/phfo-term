@@ -4,8 +4,9 @@ import { WritingData } from "./types";
 
 export async function getAllWritings(): Promise<WritingData[]> {
   const client = getDocClient();
-  
+
   try {
+    console.log('Scanning writings table');
     const command = new ScanCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       FilterExpression: "begins_with(#pk, :prefix)",
@@ -17,7 +18,9 @@ export async function getAllWritings(): Promise<WritingData[]> {
       },
     });
     const response = await client.send(command);
- 
+
+    console.log('Scan returned', (response.Items || []).length, 'items');
+
     return (response.Items || []).map(item => ({
       slug: item.slug,
       title: item.title,
@@ -33,8 +36,9 @@ export async function getAllWritings(): Promise<WritingData[]> {
 
 export async function getWriting(slug: string): Promise<WritingData | undefined> {
   const client = getDocClient();
-  
+
   try {
+    console.log(`Getting writing ${slug}`);
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       Key: {
@@ -43,9 +47,10 @@ export async function getWriting(slug: string): Promise<WritingData | undefined>
       },
     });
 
-    
     const response = await client.send(command);
-    
+
+    console.log('Get response has item:', Boolean(response.Item));
+
     if (!response.Item) return undefined;
     
     const ret : WritingData = {
