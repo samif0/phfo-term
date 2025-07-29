@@ -8,10 +8,6 @@ export function getDocClient() {
   if (!ddbDocClient) {
     const client = new DynamoDBClient({
       region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
     });
 
     ddbDocClient = DynamoDBDocumentClient.from(client);
