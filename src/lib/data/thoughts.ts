@@ -4,8 +4,9 @@ import { ThoughtData } from "./types";
 
 export async function getAllThoughts(): Promise<ThoughtData[]> {
   const client = getDocClient();
-  
+
   try {
+    console.log('Scanning thoughts table');
     const command = new ScanCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       FilterExpression: "begins_with(#pk, :prefix)",
@@ -16,9 +17,11 @@ export async function getAllThoughts(): Promise<ThoughtData[]> {
         ":prefix": "thought#",
       },
     });
-    
+
     const response = await client.send(command);
-    
+
+    console.log('Scan returned', (response.Items || []).length, 'items');
+
     return (response.Items || []).map(item => ({
       slug: item.slug,
       content: item.content,
@@ -32,8 +35,9 @@ export async function getAllThoughts(): Promise<ThoughtData[]> {
 
 export async function getThought(slug: string): Promise<ThoughtData | undefined> {
   const client = getDocClient();
-  
+
   try {
+    console.log(`Getting thought ${slug}`);
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       Key: {
@@ -41,9 +45,11 @@ export async function getThought(slug: string): Promise<ThoughtData | undefined>
         metadata: "metadata",
       },
     });
-    
+
     const response = await client.send(command);
-    
+
+    console.log('Get response has item:', Boolean(response.Item));
+
     if (!response.Item) return undefined;
     
     const ret : ThoughtData = {
