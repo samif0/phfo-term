@@ -7,6 +7,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 import ThemeToggle from "@/components/theme-toggle";
 import Copyright from "@/components/copyright";
 import NavigationTracker from "@/components/navigation-tracker";
+import { isAdmin } from "@/lib/auth";
+import Link from "next/link";
+import Button from "@/components/btn";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -26,11 +29,13 @@ export const metadata: Metadata = {
 
 const deptnf = localFont({ src: "../../public/DepartureMonoNerdFontMono-Regular.otf" });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const admin = await isAdmin();
 
   return (
     <html lang="en" suppressHydrationWarning={true}>
@@ -43,6 +48,17 @@ export default function RootLayout({
         <ThemeProvider>
           <NavigationTracker />
           <ThemeToggle />
+          <div className="fixed top-4 left-4 z-50">
+            {admin ? (
+              <form action="/api/logout" method="post">
+                <Button text="logout" variant="outline" size="small" />
+              </form>
+            ) : (
+              <Link href="/login">
+                <Button text="login" variant="outline" size="small" />
+              </Link>
+            )}
+          </div>
           <main className="flex min-h-screen flex-col">
             <div className="flex-grow pb-16">
               {children}

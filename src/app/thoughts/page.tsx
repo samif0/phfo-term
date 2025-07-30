@@ -4,12 +4,14 @@ import { getAllThoughts } from '@/lib/data/thoughts';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import Button from '@/components/btn';
 import Boids from '@/components/boids';
+import { isAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ThoughtsPage() {
 
     const thoughts = await getAllThoughts()
+    const admin = await isAdmin();
     
     // Sort thoughts by date (newest first)
     const sortedThoughts = thoughts.sort((a, b) => {
@@ -64,7 +66,14 @@ export default async function ThoughtsPage() {
           </div>
         )}
       </div>
+      {admin && (
+        <div className="mt-4">
+          <Link href="/thoughts/new">
+            <Button text="add thought" variant="outline" />
+          </Link>
+        </div>
+      )}
       <NavigationButton />
     </div>
-    )    
+    )
 }
