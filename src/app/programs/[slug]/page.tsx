@@ -3,7 +3,7 @@ import NavigationButton from '@/components/navigation-button';
 import Program from '@/components/program';
 import { getAllPrograms, getProgram } from '@/lib/data/programs';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 interface ProgramPageProps {
   params: Promise<{

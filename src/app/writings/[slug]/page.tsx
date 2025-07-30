@@ -3,7 +3,7 @@ import Writing from '@/components/writing';
 import NavigationButton from '@/components/navigation-button';
 import { getAllWritings, getWriting } from '@/lib/data/writings';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 interface WritingPageProps {
   params: Promise<{
