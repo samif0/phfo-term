@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Writing from '@/components/writing';
 import NavigationButton from '@/components/navigation-button';
-import { getAllWritings, getWriting } from '@/lib/data/writings';
+import { getWriting } from '@/lib/data/writings';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,15 +11,7 @@ interface WritingPageProps {
   }>
 }
 
-export async function generateStaticParams() {
-  const writings = await getAllWritings();
-  
-  return writings.map((writing) => ({
-    slug: writing.slug,
-  }));
-}
-
-export default async function WritingPage({ params }: WritingPageProps) { 
+export default async function WritingPage({ params }: WritingPageProps) {
   const awaitedParams = await params;
   const writingData = await getWriting(awaitedParams.slug);
   
