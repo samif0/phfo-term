@@ -4,21 +4,28 @@ import Link from 'next/link';
 import LangtonLoops from '@/components/Lreplicator';
 import Image from 'next/image';
 import Boids from '@/components/boids';
+import { isAdmin } from '@/lib/auth';
 
-export default function Home() {
+export default async function Home() {
+  const admin = await isAdmin();
 
   return (
     <>
       <Boids />
       <LangtonLoops />
-      <div className="fixed top-4 right-4 z-50">
-        <Image 
-          src="/images/pixelated-sami.png" 
-          alt="Sami" 
-          width={120} 
+      <div className="fixed top-4 right-4 z-50 flex flex-col items-center gap-2">
+        <Image
+          src="/images/pixelated-sami.png"
+          alt="Sami"
+          width={120}
           height={120}
           className="rounded-lg shadow-lg"
         />
+        {!admin && (
+          <Link href="/login">
+            <Button text="login" variant="outline" size="small" />
+          </Link>
+        )}
       </div>
       <div className="flex flex-col items-center min-h-screen pb-16 md:pb-20">
         <div className="w-full max-w-3xl mt-12 self-start px-4 z-10">

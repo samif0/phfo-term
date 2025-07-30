@@ -8,7 +8,6 @@ import ThemeToggle from "@/components/theme-toggle";
 import Copyright from "@/components/copyright";
 import NavigationTracker from "@/components/navigation-tracker";
 import { isAdmin } from "@/lib/auth";
-import Link from "next/link";
 import Button from "@/components/btn";
 
 export const viewport: Viewport = {
@@ -49,14 +48,10 @@ export default async function RootLayout({
           <NavigationTracker />
           <ThemeToggle />
           <div className="fixed top-4 left-4 z-50">
-            {admin ? (
+            {admin && (
               <form action="/api/logout" method="post">
                 <Button text="logout" variant="outline" size="small" />
               </form>
-            ) : (
-              <Link href="/login">
-                <Button text="login" variant="outline" size="small" />
-              </Link>
             )}
           </div>
           <main className="flex min-h-screen flex-col">
