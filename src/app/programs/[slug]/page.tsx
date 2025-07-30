@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import NavigationButton from '@/components/navigation-button';
 import Program from '@/components/program';
-import { getAllPrograms, getProgram } from '@/lib/data/programs';
+import { getProgram } from '@/lib/data/programs';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,15 +11,7 @@ interface ProgramPageProps {
   }>
 }
 
-export async function generateStaticParams() {
-  const programs = await getAllPrograms();
-  
-  return programs.map((program) => ({
-    slug: program.slug,
-  }))
-}
-
-export default async function ProgramPage({ params }: ProgramPageProps) { 
+export default async function ProgramPage({ params }: ProgramPageProps) {
   const awaitedParams = await params;
   const programData = await getProgram(awaitedParams.slug);
 
