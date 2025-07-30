@@ -4,11 +4,13 @@ import { getAllWritings } from '@/lib/data/writings';
 import Button from '@/components/btn';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import Boids from '@/components/boids';
+import { isAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export default async function WritingsPage() {
   const writings = await getAllWritings();
+  const admin = await isAdmin();
   
   // Get current date and first day of current month
   const now = new Date();
@@ -58,9 +60,9 @@ export default async function WritingsPage() {
           <div className="flex flex-col items-center gap-4">
             <h2 className="text-xl font-semibold mb-2">previous</h2>
             {previousWritings.map((writing) => (
-              <Link 
+              <Link
                 key={writing.slug}
-                href={`/writings/${writing.slug}`} 
+                href={`/writings/${writing.slug}`}
                 className="hover:opacity-70 transition-opacity"
               >
                 <Button text={writing.title} variant="outline" size="medium" icon={<ArrowRightIcon className="h-3 w-3" />} iconPosition="right" />
@@ -69,6 +71,13 @@ export default async function WritingsPage() {
           </div>
         )}
       </div>
+      {admin && (
+        <div className="mt-4">
+          <Link href="/writings/new">
+            <Button text="add writing" variant="outline" />
+          </Link>
+        </div>
+      )}
       <NavigationButton />
     </div>
   )
