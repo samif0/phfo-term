@@ -3,7 +3,7 @@ import Thought from '@/components/thought';
 import { getAllThoughts, getThought } from '@/lib/data/thoughts';
 import NavigationButton from '@/components/navigation-button';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 interface ThoughtPageProps {
   params: Promise<{

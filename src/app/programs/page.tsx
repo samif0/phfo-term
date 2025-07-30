@@ -5,7 +5,7 @@ import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import Button from '@/components/btn';
 import Boids from '@/components/boids';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function ProgramsPage() {
     const programs = await getAllPrograms()

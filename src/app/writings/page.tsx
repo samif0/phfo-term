@@ -5,7 +5,7 @@ import Button from '@/components/btn';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import Boids from '@/components/boids';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function WritingsPage() {
   const writings = await getAllWritings();
