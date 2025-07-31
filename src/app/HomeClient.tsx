@@ -4,9 +4,11 @@ import Button from '@/components/btn';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { Menu, X } from 'lucide-react';
 
 export default function HomeClient({ admin }: { admin: boolean }) {
   const [showNav, setShowNav] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -16,7 +18,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const Buttons = () => (
+  const Buttons = ({ onClick }: { onClick?: () => void } = {}) => (
     <>
       <Link href="/writings">
         <Button
@@ -25,6 +27,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
           size="medium"
           icon={<ArrowRightIcon className="h-3 w-3" />}
           iconPosition="right"
+          onClick={onClick}
         />
       </Link>
       <Link href="/thoughts">
@@ -34,6 +37,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
           size="medium"
           icon={<ArrowRightIcon className="h-3 w-3" />}
           iconPosition="right"
+          onClick={onClick}
         />
       </Link>
       <Link href="/programs">
@@ -43,6 +47,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
           size="medium"
           icon={<ArrowRightIcon className="h-3 w-3" />}
           iconPosition="right"
+          onClick={onClick}
         />
       </Link>
       <Link href="/playground">
@@ -52,6 +57,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
           size="medium"
           icon={<ArrowRightIcon className="h-3 w-3" />}
           iconPosition="right"
+          onClick={onClick}
         />
       </Link>
     </>
@@ -60,12 +66,24 @@ export default function HomeClient({ admin }: { admin: boolean }) {
   return (
     <>
       <nav
-        className={`fixed top-0 w-full bg-background/80 backdrop-blur-sm flex justify-center gap-4 py-2 z-40 transition-opacity ${showNav ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed top-0 w-full bg-background/80 backdrop-blur-sm flex justify-center sm:justify-center gap-4 py-2 z-40 transition-opacity ${showNav ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
-        <Buttons />
+        <div className="hidden sm:flex gap-4">
+          <Buttons />
+        </div>
+        <div className="flex sm:hidden justify-between w-full px-4">
+          <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </nav>
+      {menuOpen && (
+        <div className="sm:hidden fixed top-10 left-0 right-0 bg-background/95 backdrop-blur-md flex flex-col items-center gap-2 py-4 z-40">
+          <Buttons onClick={() => setMenuOpen(false)} />
+        </div>
+      )}
       <section className="flex flex-col items-center justify-end min-h-screen pb-16 md:pb-20">
-        <div className={`flex justify-center gap-4 transition-opacity ${showNav ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}> 
+        <div className={`hidden sm:flex justify-center gap-4 transition-opacity ${showNav ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <Buttons />
         </div>
       </section>

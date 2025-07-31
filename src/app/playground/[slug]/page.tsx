@@ -1,26 +1,18 @@
 import { notFound } from 'next/navigation';
 import PlaygroundContainer from '@/components/playground-container';
-import { getPlaygroundProgram, getAllPlaygroundPrograms } from '@/lib/playground-registry';
+import { getPlaygroundProgram } from '@/lib/playground-registry';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 interface PlaygroundPageProps {
-  params: Promise<{
+  params: {
     slug: string
-  }>
+  }
 }
 
-export async function generateStaticParams() {
-  const programs = getAllPlaygroundPrograms();
-  
-  return programs.map((program) => ({
-    slug: program.id,
-  }))
-}
 
-export default async function PlaygroundPage({ params }: PlaygroundPageProps) { 
-  const awaitedParams = await params;
-  const program = getPlaygroundProgram(awaitedParams.slug);
+export default async function PlaygroundPage({ params }: PlaygroundPageProps) {
+  const program = getPlaygroundProgram(params.slug);
 
   if (!program) {
     notFound();
