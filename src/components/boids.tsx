@@ -146,6 +146,8 @@ export default function Boids() {
       // defer worker setup until we have loaded initial targets
       let worker: Worker;
       let initialized = false;
+      let lastWidth = window.innerWidth;
+      let lastHeight = window.innerHeight;
 
       // on remount clear hover target
       hoverTargetRef.current = null;
@@ -163,12 +165,31 @@ export default function Boids() {
       };
       
       const resizeCanvas = async () => {
-        console.log(`resizeCanvas for route: ${route}, screen: ${canvas.width}x${canvas.height}`);
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        const widthDiff = Math.abs(newWidth - lastWidth);
+        const heightDiff = Math.abs(newHeight - lastHeight);
+
+        const smallViewportChange = widthDiff < 10 && heightDiff < 120;
+        if (worker && initialized && smallViewportChange) {
+          worker.postMessage({ type: 'viewport', width: newWidth, height: newHeight });
+          lastWidth = newWidth;
+          lastHeight = newHeight;
+          return;
+        }
+
+        console.log(`resizeCanvas for route: ${route}, screen: ${newWidth}x${newHeight}`);
+
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        lastWidth = newWidth;
+        lastHeight = newHeight;
 
         let updated = false;
-        const wordD = { small: 3, medium: 4, large: 5 };
-        const imgD = { small: 3, medium: 4, large: 5};
-        const MAX_IMG_POINTS = 3000;
+        const wordD = { small: 8, medium: 5, large: 4 };
+        const imgD = { small: 8, medium: 5, large: 4 };
+        const MAX_POINTS = { small: 1000, medium: 2000, large: 3000 };
         // pick image src by matching route prefix
         const keys = Object.keys(imageMap);
         const matchKey = keys.find(key => route.startsWith(key));
@@ -178,33 +199,42 @@ export default function Boids() {
           imgSrc: string | undefined,
           imgDensity: number,
           wordFontSize: number,
-          wordDensity: number
+          wordDensity: number,
+          maxPts: number
         ) {
           if (imgSrc) {
             try {
               let pts = await getImagePointCloud(imgSrc, imgDensity);
-              if (pts.length > MAX_IMG_POINTS) {
-                pts = pts.filter((_, i) => i % Math.ceil(pts.length / MAX_IMG_POINTS) === 0);
+              if (pts.length > maxPts) {
+                pts = pts.filter((_, i) => i % Math.ceil(pts.length / maxPts) === 0);
               }
               return pts;
             } catch (err) {
               console.error('Failed to load image point cloud', err);
-              return getWordPointCloud("sami f.", wordFontSize, wordDensity);
+              const wp = getWordPointCloud("sami f.", wordFontSize, wordDensity);
+              return wp.slice(0, maxPts);
             }
           }
-          return getWordPointCloud("sami f.", wordFontSize, wordDensity);
+          const wp = getWordPointCloud("sami f.", wordFontSize, wordDensity);
+          return wp.slice(0, maxPts);
         }
 
         const sizeConfigs = {
-          small: { imgDensity: imgD.small, wordFontSize: 80, wordDensity: wordD.small },
-          medium: { imgDensity: imgD.medium, wordFontSize: 150, wordDensity: wordD.medium },
-          large: { imgDensity: imgD.large, wordFontSize: 300, wordDensity: wordD.large },
+          small: { imgDensity: imgD.small, wordFontSize: 80, wordDensity: wordD.small, maxPts: MAX_POINTS.small },
+          medium: { imgDensity: imgD.medium, wordFontSize: 150, wordDensity: wordD.medium, maxPts: MAX_POINTS.medium },
+          large: { imgDensity: imgD.large, wordFontSize: 300, wordDensity: wordD.large, maxPts: MAX_POINTS.large },
         };
 
         // always load a target point cloud: image (if available) or fallback word
         const sizeKey = isScreenSize('small') ? 'small' : isScreenSize('medium') ? 'medium' : 'large';
         const cfg = sizeConfigs[sizeKey];
-        targetsPointRef.current = await loadTargetsForSize(imgSrc, cfg.imgDensity, cfg.wordFontSize, cfg.wordDensity);
+        targetsPointRef.current = await loadTargetsForSize(
+          imgSrc,
+          cfg.imgDensity,
+          cfg.wordFontSize,
+          cfg.wordDensity,
+          cfg.maxPts
+        );
         updated = true;
 
         if(updated) {
