@@ -8,15 +8,15 @@ canvas {
 }
 
 :root {
-  /* Default dark theme */
-  --background: #282119;
-  --foreground: #ffffff;
+  /* Default dark theme - richer reddish brown */
+  --background: #3d221b;
+  --foreground: #f8ede3;
 }
 
 .light {
   /* Anthropic-inspired warm beige theme */
   --background: #f4f1ed;
-  --foreground: #964b3c;
+  --foreground: #5a2d24;
 }
 
 html {
