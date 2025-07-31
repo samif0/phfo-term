@@ -457,6 +457,20 @@ self.onmessage = (e) => {
         16,
       );
       break;
+    case "viewport":
+      canvas.width = data.width;
+      canvas.height = data.height;
+      // reinitialize quadtree without resetting boids
+      qt = new Quadtree(
+        new Rectangle(
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width / 2,
+          canvas.height / 2,
+        ),
+        16,
+      );
+      break;
     case "pointer":
       pointer = { x: data.x, y: data.y };
       break;
