@@ -21,14 +21,20 @@ canvas {
 
 html {
   background: var(--background);
-  overflow: hidden;
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow: hidden;
-  height: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 1rem;
+  }
 }
