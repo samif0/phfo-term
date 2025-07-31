@@ -41,7 +41,7 @@ export default async function Home() {
         </div>
 
       {/* Buttons row */}
-      <div className="flex flex-col sm:flex-row w-full gap-4 md:gap-6 mt-auto px-4">
+      <div className="flex flex-col sm:flex-row w-full gap-4 md:gap-6 mt-auto px-4 sm:justify-center">
         <Link href="/writings" className="text-white hover:text-gray-300 z-10">
           <Button
             text={
