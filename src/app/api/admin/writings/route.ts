@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { isAdmin } from '@/lib/auth';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { getDocClient } from '@/lib/dynamodb';
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('adminAuth')?.value !== 'true') {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const data = await req.json();
