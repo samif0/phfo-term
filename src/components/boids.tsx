@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useTheme } from './theme-provider';
 
 
@@ -102,7 +102,9 @@ export default function Boids() {
     const mousePositionRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 });
     const targetsPointRef = useRef<{ x: number; y: number }[]>([]);
     const hoverTargetRef = useRef<{ x: number; y: number } | null>(null);
-    const workerRef = useRef<Worker | null>(null); 
+    const workerRef = useRef<Worker | null>(null);
+    const [scrollOffset, setScrollOffset] = useState(0);
+    const targetScrollRef = useRef(0);
     // Typed buffers stored in a ref to avoid re-allocating on every render/mount
     const buffersRef = useRef<{
       positionsX: Float32Array;
@@ -393,11 +395,30 @@ export default function Boids() {
     }, [pathname]);
 
     // Update worker theme when theme changes
-    useEffect(() => {
-      if (workerRef.current) {
-        workerRef.current.postMessage({ type: 'theme', isDark: theme === 'dark' });
-      }
-    }, [theme]);
+  useEffect(() => {
+    if (workerRef.current) {
+      workerRef.current.postMessage({ type: 'theme', isDark: theme === 'dark' });
+    }
+  }, [theme]);
+
+  // Smoothly follow scroll position
+  useEffect(() => {
+    const onScroll = () => {
+      targetScrollRef.current = window.scrollY * 0.3;
+    };
+    const animate = () => {
+      setScrollOffset(prev => {
+        const diff = targetScrollRef.current - prev;
+        return Math.abs(diff) < 0.1 ? targetScrollRef.current : prev + diff * 0.1;
+      });
+      requestAnimationFrame(animate);
+    };
+    animate();
+    window.addEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
   
     return (
         <div>
@@ -405,6 +426,7 @@ export default function Boids() {
                 key="boids-canvas"
                 ref={canvasRef}
                 className="fixed top-0 left-0 w-screen h-screen opacity-40"
+                style={{ transform: `translateY(${scrollOffset}px)` }}
             />
 
         </div>
