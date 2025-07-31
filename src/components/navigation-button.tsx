@@ -12,9 +12,22 @@ export default function NavigationButton() {
   const [showBackButton, setShowBackButton] = useState(false);
 
   useEffect(() => {
-    // Check if user came from home page
     const cameFromHome = sessionStorage.getItem('cameFromHome') === 'true';
-    setShowBackButton(cameFromHome);
+
+    let fromSameOrigin = false;
+    const referrer = document.referrer;
+    if (referrer) {
+      try {
+        const refUrl = new URL(referrer);
+        fromSameOrigin = refUrl.origin === window.location.origin;
+      } catch {
+        fromSameOrigin = false;
+      }
+    }
+
+    const hasHistory = window.history.length > 1;
+
+    setShowBackButton(cameFromHome || fromSameOrigin || hasHistory);
   }, [pathname]);
 
   // Don't show any button on home page
