@@ -5,14 +5,15 @@ import { getPlaygroundProgram } from '@/lib/playground-registry';
 export const dynamic = 'force-dynamic';
 
 interface PlaygroundPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 
 export default async function PlaygroundPage({ params }: PlaygroundPageProps) {
-  const program = getPlaygroundProgram(params.slug);
+  const { slug } = await params;
+  const program = getPlaygroundProgram(slug);
 
   if (!program) {
     notFound();

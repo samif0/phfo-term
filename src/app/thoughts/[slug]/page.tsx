@@ -7,14 +7,15 @@ import Boids from '@/components/boids';
 export const dynamic = 'force-dynamic';
 
 interface ThoughtPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 
 export default async function ThoughtPage({ params }: ThoughtPageProps) {
-  const thoughtData = await getThought(params.slug);
+  const { slug } = await params;
+  const thoughtData = await getThought(slug);
   
   if (!thoughtData) {
     notFound();

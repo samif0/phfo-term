@@ -7,13 +7,14 @@ import Boids from '@/components/boids';
 export const dynamic = 'force-dynamic';
 
 interface WritingPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default async function WritingPage({ params }: WritingPageProps) {
-  const writingData = await getWriting(params.slug);
+  const { slug } = await params;
+  const writingData = await getWriting(slug);
   
   if (!writingData) {
     notFound();
