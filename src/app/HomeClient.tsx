@@ -1,7 +1,7 @@
 'use client';
 
 import Button from '@/components/btn';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
@@ -83,7 +83,10 @@ export default function HomeClient({ admin }: { admin: boolean }) {
         </div>
       )}
       <section className="flex flex-col items-center justify-end min-h-screen pb-16 md:pb-20">
-        <div className={`hidden sm:flex justify-center gap-4 transition-opacity ${showNav ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div
+          className={`hidden sm:flex flex-col items-center gap-2 transition-opacity ${showNav ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        >
+          {!showNav && <ArrowUpIcon className="w-6 h-6 blink" />}
           <Buttons />
         </div>
       </section>

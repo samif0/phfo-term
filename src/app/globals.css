@@ -25,16 +25,29 @@ html {
   overflow-x: hidden;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  transition: background-color 0.3s ease, color 0.3s ease;
-  min-height: 100%;
-  overflow-x: hidden;
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 640px) {
+    body {
+      padding: 1rem;
+    }
+  }
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
-@media (max-width: 640px) {
-  body {
-    padding: 1rem;
-  }
+.blink {
+  animation: blink 1s step-start infinite;
 }
