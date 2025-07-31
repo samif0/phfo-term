@@ -8,8 +8,8 @@ export default async function Home() {
   const admin = await isAdmin();
   return (
     <>
+      <Boids />
       <div className="hidden sm:block">
-        <Boids />
         <LangtonLoops />
       </div>
       <div className="sm:fixed sm:top-4 sm:right-4 z-50 flex flex-col items-center gap-2 mt-4 sm:mt-0">
