@@ -11,7 +11,7 @@ import { isAdmin } from "@/lib/auth";
 import Button from "@/components/btn";
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#f4f1ed",
   width: "device-width",
   initialScale: 1,
 };

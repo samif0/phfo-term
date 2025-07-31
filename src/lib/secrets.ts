@@ -7,9 +7,13 @@ export async function getAdminPassword(): Promise<string> {
     return cachedPassword;
   }
 
-  const secretName = process.env.ADMIN_PASSWORD_SECRET_NAME;
+  const secretName =
+    process.env.ADMIN_PASSWORD_SECRET_NAME ||
+    process.env.ADMIN_PASSWORD_SECRET_KEY;
   if (!secretName) {
-    throw new Error('ADMIN_PASSWORD_SECRET_NAME env var not set');
+    throw new Error(
+      'ADMIN_PASSWORD_SECRET_NAME or ADMIN_PASSWORD_SECRET_KEY env var not set'
+    );
   }
 
   const client = new SecretsManagerClient({ region: process.env.AWS_REGION });
