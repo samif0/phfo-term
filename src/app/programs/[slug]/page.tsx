@@ -7,13 +7,14 @@ import Boids from '@/components/boids';
 export const dynamic = 'force-dynamic';
 
 interface ProgramPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default async function ProgramPage({ params }: ProgramPageProps) {
-  const programData = await getProgram(params.slug);
+  const { slug } = await params;
+  const programData = await getProgram(slug);
 
     
   if (!programData) {
