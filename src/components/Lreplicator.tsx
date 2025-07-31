@@ -161,7 +161,7 @@ export default function Lreplicator() {
         initGrid(width, height);
 
         let frameCount = 0;
-        const FRAMES_PER_UPDATE = 2; // Faster propagation
+        const FRAMES_PER_UPDATE = 3; // Slightly slower propagation
 
         const animate = () => {
             frameCount++;

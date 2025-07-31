@@ -65,7 +65,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
         <Buttons />
       </nav>
       <section className="flex flex-col items-center justify-end min-h-screen pb-16 md:pb-20">
-        <div className="flex justify-center gap-4">
+        <div className={`flex justify-center gap-4 transition-opacity ${showNav ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}> 
           <Buttons />
         </div>
       </section>

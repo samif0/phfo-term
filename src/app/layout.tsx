@@ -5,6 +5,7 @@ import "./globals.css";
 import BoidProfiler from "@/components/boidprofiler";
 import { ThemeProvider } from "@/components/theme-provider";
 import ThemeToggle from "@/components/theme-toggle";
+import InfiniteScroll from "@/components/infinite-scroll";
 import Copyright from "@/components/copyright";
 import NavigationTracker from "@/components/navigation-tracker";
 import { isAdmin } from "@/lib/auth";
@@ -60,6 +61,7 @@ export default async function RootLayout({
             </div>
             <Copyright />
             <BoidProfiler />
+            <InfiniteScroll />
           </main>
         </ThemeProvider>
       </body>
