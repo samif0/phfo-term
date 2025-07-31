@@ -11,9 +11,11 @@ export default async function Home() {
 
   return (
     <>
-      <Boids />
-      <LangtonLoops />
-      <div className="fixed top-4 right-4 z-50 flex flex-col items-center gap-2">
+      <div className="hidden sm:block">
+        <Boids />
+        <LangtonLoops />
+      </div>
+      <div className="sm:fixed sm:top-4 sm:right-4 z-50 flex flex-col items-center gap-2 mt-4 sm:mt-0">
         <Image
           src="/images/pixelated-sami.png"
           alt="Sami"
@@ -28,25 +30,18 @@ export default async function Home() {
         )}
       </div>
       <div className="flex flex-col items-center min-h-screen pb-16 md:pb-20">
-        <div className="w-full max-w-3xl mt-12 self-start px-4 z-10">
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-400">hello.</h1>
-          <h2 className="mt-2 text-2xl" style={{ color: 'rgba(180, 90, 70, 0.9)' }}>
-          software engineer @ AWS | RPI CS &apos;23
-          
-          </h2> 
-          
-          <p className="mt-2 text-gray-400">
-          self-organizing systems, self-replication, and mechanistic interpretability.
-          </p>
-          <p className="mt-2 text-gray-400">
-          
+        <div className="w-full max-w-3xl mt-16 sm:mt-20 px-4 z-10 text-center sm:text-left">
+          <h1 className="text-4xl sm:text-5xl font-semibold text-gray-400">hello.</h1>
+          <h2 className="mt-2 text-xl sm:text-2xl" style={{ color: 'rgba(180, 90, 70, 0.9)' }}>
+            software engineer @ AWS | RPI CS &apos;23
+          </h2>
+          <p className="mt-4 text-gray-400">
+            self-organizing systems, self-replication, and mechanistic interpretability.
           </p>
         </div>
-      </div>
 
       {/* Buttons row */}
-      <div className="flex flex-row gap-4 md:gap-6 mt-auto">
+      <div className="flex flex-col sm:flex-row w-full gap-4 md:gap-6 mt-auto px-4">
         <Link href="/writings" className="text-white hover:text-gray-300 z-10">
           <Button
             text={
