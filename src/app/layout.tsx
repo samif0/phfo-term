@@ -10,6 +10,7 @@ import Copyright from "@/components/copyright";
 import NavigationTracker from "@/components/navigation-tracker";
 import { isAdmin } from "@/lib/auth";
 import Button from "@/components/btn";
+import CustomCursor from "@/components/custom-cursor";
 
 export const viewport: Viewport = {
   themeColor: "#f4f1ed",
@@ -48,6 +49,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <NavigationTracker />
           <ThemeToggle />
+          <CustomCursor />
           <div className="fixed top-4 left-4 z-50">
             {admin && (
               <form action="/api/logout" method="post">
