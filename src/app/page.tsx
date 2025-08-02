@@ -1,6 +1,5 @@
-import LangtonLoops from '@/components/Lreplicator';
+import HomeBackground from '@/components/home-background';
 import Image from 'next/image';
-import Boids from '@/components/boids';
 import { isAdmin } from '@/lib/auth';
 import HomeClient from './HomeClient';
 
@@ -8,10 +7,7 @@ export default async function Home() {
   const admin = await isAdmin();
   return (
     <>
-      <Boids />
-      <div className="hidden sm:block">
-        <LangtonLoops />
-      </div>
+      <HomeBackground />
       <div className="fixed top-4 right-4 z-50 flex flex-col items-center gap-2">
         <Image
           src="/images/pixelated-sami.png"
