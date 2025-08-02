@@ -28,10 +28,25 @@ html {
   body {
     color: var(--foreground);
     background: var(--background);
+    cursor: url('/cursor-dark.svg') 12 12, default;
     transition: background-color 0.3s ease, color 0.3s ease;
     min-height: 100%;
     overflow-x: hidden;
   }
+
+.light body {
+  cursor: url('/cursor-light.svg') 12 12, default;
+}
+
+a,
+button {
+  cursor: url('/cursor-dark.svg') 12 12, pointer;
+}
+
+html.light a,
+html.light button {
+  cursor: url('/cursor-light.svg') 12 12, pointer;
+}
 
   @media (max-width: 640px) {
     body {
