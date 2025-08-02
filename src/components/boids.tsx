@@ -187,9 +187,9 @@ export default function Boids() {
         lastHeight = newHeight;
 
         let updated = false;
-        const wordD = { small: 8, medium: 5, large: 4 };
-        const imgD = { small: 8, medium: 5, large: 4 };
-        const MAX_POINTS = { small: 1000, medium: 2000, large: 3000 };
+        const wordD = { small: 5, medium: 3, large: 2 };
+        const imgD = { small: 6, medium: 4, large: 3 };
+        const MAX_POINTS = { small: 2000, medium: 4000, large: 6000 };
         // pick image src by matching route prefix
         const keys = Object.keys(imageMap);
         const matchKey = keys.find(key => route.startsWith(key));
