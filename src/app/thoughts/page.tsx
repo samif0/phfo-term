@@ -3,6 +3,7 @@ import NavigationButton from '@/components/navigation-button';
 import { getAllThoughts } from '@/lib/data/thoughts';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import Button from '@/components/btn';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import Boids from '@/components/boids';
 import { isAdmin } from '@/lib/auth';
 
@@ -67,11 +68,16 @@ export default async function ThoughtsPage() {
         )}
       </div>
       {admin && (
-        <div className="mt-4">
-          <Link href="/thoughts/new">
-            <Button text="add thought" variant="outline" />
-          </Link>
-        </div>
+        <Link
+          href="/thoughts/new"
+          className="absolute top-4 left-4 z-10"
+        >
+          <Button
+            text="add thought"
+            variant="ghost"
+            icon={<PlusIcon className="h-4 w-4" />}
+          />
+        </Link>
       )}
       <NavigationButton />
     </div>
