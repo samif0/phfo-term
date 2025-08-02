@@ -34,7 +34,6 @@ html {
     overflow-x: hidden;
   }
 
-/* hide native cursor on interactive elements too */
 a,
 button {
   cursor: none;
