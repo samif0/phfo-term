@@ -180,8 +180,6 @@ export default function Boids() {
           return;
         }
 
-        console.log(`resizeCanvas for route: ${route}, screen: ${newWidth}x${newHeight}`);
-
         canvas.width = newWidth;
         canvas.height = newHeight;
 
@@ -293,10 +291,6 @@ export default function Boids() {
               workerUrl,
               { type: 'module' }
             );
-
-            
-
-            console.log('worker created', worker)
 
             // transfer control to offscreen after creating worker
             const offscreen = canvas.transferControlToOffscreen();
