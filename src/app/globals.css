@@ -34,9 +34,11 @@ html {
     overflow-x: hidden;
   }
 
-a,
-button {
-  cursor: none;
+/* hide native cursor globally so only the custom cursor is visible */
+*,
+*::before,
+*::after {
+  cursor: none !important;
 }
 
   @media (max-width: 640px) {
@@ -116,7 +118,7 @@ button {
   position: absolute;
   width: 4px;
   height: 4px;
-  background: var(--foreground);
+  background: var(--bird-color, var(--foreground));
   border-radius: 50%;
   opacity: 0;
 }
