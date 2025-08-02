@@ -12,7 +12,7 @@ export default async function Home() {
       <div className="hidden sm:block">
         <LangtonLoops />
       </div>
-      <div className="sm:fixed sm:top-4 sm:right-4 z-50 flex flex-col items-center gap-2 mt-4 sm:mt-0">
+      <div className="fixed top-4 right-4 z-50 flex flex-col items-center gap-2">
         <Image
           src="/images/pixelated-sami.png"
           alt="Sami"

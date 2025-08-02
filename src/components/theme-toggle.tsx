@@ -10,13 +10,13 @@ function ThemeToggleButton() {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed bottom-2 right-20 z-50 p-2 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-200"
+      className="fixed bottom-4 right-4 z-50 p-2 border border-[var(--foreground)] bg-[var(--background)] text-[var(--foreground)] rounded-md transition-colors duration-200 hover:bg-[var(--foreground)] hover:text-[var(--background)]"
       aria-label="Toggle theme"
     >
       {theme === 'dark' ? (
-        <SunIcon className="h-5 w-5" />
+        <SunIcon className="h-4 w-4" />
       ) : (
-        <MoonIcon className="h-5 w-5" />
+        <MoonIcon className="h-4 w-4" />
       )}
     </button>
   );

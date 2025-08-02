@@ -8,13 +8,13 @@ export default function HomeButton() {
   const router = useRouter();
 
   return (
-    <div className="fixed bottom-4 left-20 z-50">
+    <div className="fixed bottom-4 left-4 z-50">
       <button
         onClick={() => router.push('/')}
-        className="p-2 bg-gray-800 text-white hover:bg-gray-700 rounded-lg transition-colors duration-200 flex items-center gap-2"
+        className="p-2 border border-[var(--foreground)] bg-[var(--background)] text-[var(--foreground)] rounded-md transition-colors duration-200 hover:bg-[var(--foreground)] hover:text-[var(--background)]"
         aria-label="Go to home"
       >
-        <Home className="w-5 h-5" />
+        <Home className="w-4 h-4" />
       </button>
     </div>
   );

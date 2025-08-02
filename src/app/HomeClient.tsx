@@ -1,22 +1,13 @@
 'use client';
 
 import Button from '@/components/btn';
-import { ArrowRightIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 export default function HomeClient({ admin }: { admin: boolean }) {
-  const [showNav, setShowNav] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => {
-      setShowNav(window.scrollY > window.innerHeight * 0.1);
-    };
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   const Buttons = ({ onClick }: { onClick?: () => void } = {}) => (
     <>
@@ -65,9 +56,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
 
   return (
     <>
-      <nav
-        className={`fixed top-0 w-full bg-background/80 backdrop-blur-sm flex justify-center sm:justify-center gap-4 py-2 z-40 transition-opacity ${showNav ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      >
+      <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-sm flex justify-center sm:justify-center gap-4 py-2 z-40">
         <div className="hidden sm:flex gap-4">
           <Buttons />
         </div>
@@ -82,15 +71,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
           <Buttons onClick={() => setMenuOpen(false)} />
         </div>
       )}
-      <section className="flex flex-col items-center justify-end min-h-screen pb-16 md:pb-20">
-        <div
-          className={`hidden sm:flex flex-col items-center gap-2 transition-opacity ${showNav ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-        >
-          {!showNav && <ArrowUpIcon className="w-6 h-6 blink" />}
-          <Buttons />
-        </div>
-      </section>
-      <section className="max-w-3xl mx-auto mt-20 space-y-6 bg-background/60 backdrop-blur-md p-6 text-red-700 dark:text-gray-300">
+      <section className="max-w-3xl mx-auto mt-24 space-y-6 bg-background/60 backdrop-blur-md p-6 text-red-700 dark:text-gray-300">
         <div className="text-center sm:text-left">
           <h1 className="text-4xl sm:text-5xl font-semibold text-red-800 dark:text-gray-400">hello.</h1>
           <h2 className="mt-2 text-xl sm:text-2xl" style={{ color: 'rgba(180, 90, 70, 0.9)' }}>
