@@ -20,3 +20,8 @@ npm install -g pnpm@8 pm2
 rm -f pnpm-lock.yaml
 pnpm install
 
+# Build the application to ensure there are no compile-time errors before
+# starting the server. This mirrors the build step used in development and
+# prevents broken deployments from reaching production.
+pnpm build
+
