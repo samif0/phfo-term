@@ -3,7 +3,7 @@ import NavigationButton from '@/components/navigation-button';
 import { getAllWritings } from '@/lib/data/writings';
 import Button from '@/components/btn';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
-import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
+import AdminPanel from '@/components/admin-panel';
 import Boids from '@/components/boids';
 import { isAdmin } from '@/lib/auth';
 
@@ -72,18 +72,7 @@ export default async function WritingsPage() {
           </div>
         )}
       </div>
-      {admin && (
-        <Link
-          href="/writings/new"
-          className="absolute top-4 left-4 z-10"
-        >
-          <Button
-            text="add writing"
-            variant="ghost"
-            icon={<PlusIcon className="h-4 w-4" />}
-          />
-        </Link>
-      )}
+      {admin && <AdminPanel addHref="/writings/new" />}
       <NavigationButton />
     </div>
   )
