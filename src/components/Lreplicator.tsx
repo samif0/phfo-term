@@ -124,9 +124,6 @@ export default function Lreplicator() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const colors = themeRef.current === 'light' ? COLORS_LIGHT : COLORS;
-        console.log('Replicator - Current theme:', themeRef.current);
-        console.log('Replicator - Using colors:', themeRef.current === 'light' ? 'COLORS_LIGHT' : 'COLORS');
-        console.log('Replicator - Active cell color:', colors[1]);
 
         const grid = gridRef.current;
 
@@ -199,7 +196,6 @@ export default function Lreplicator() {
 
     // Trigger redraw when theme changes
     useEffect(() => {
-        console.log('Replicator - Theme changed to:', theme);
         themeRef.current = theme;
         if (dimensionsRef.current.width > 0 && dimensionsRef.current.height > 0) {
             draw(dimensionsRef.current.width, dimensionsRef.current.height);

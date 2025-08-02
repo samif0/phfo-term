@@ -6,7 +6,6 @@ export async function getAllPrograms(): Promise<ProgramData[]> {
   const client = getDocClient();
 
   try {
-    console.log('Scanning programs table');
     const command = new ScanCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       FilterExpression: "begins_with(#pk, :prefix)",
@@ -19,8 +18,6 @@ export async function getAllPrograms(): Promise<ProgramData[]> {
     });
 
     const response = await client.send(command);
-
-    console.log('Scan returned', (response.Items || []).length, 'items');
 
     return (response.Items || []).map(item => ({
       slug: item.slug,
@@ -38,7 +35,6 @@ export async function getProgram(slug: string): Promise<ProgramData | undefined>
   const client = getDocClient();
 
   try {
-    console.log(`Getting program ${slug}`);
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
       Key: {
@@ -48,8 +44,6 @@ export async function getProgram(slug: string): Promise<ProgramData | undefined>
     });
 
     const response = await client.send(command);
-
-    console.log('Get response has item:', Boolean(response.Item));
 
     if (!response.Item) return undefined;
     
