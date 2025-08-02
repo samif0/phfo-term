@@ -6,7 +6,9 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 export default function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const pos = useRef({ x: 0, y: 0 });
-  const rafId = useRef<number>();
+  // useRef requires an initial value; we start with undefined to store the
+  // requestAnimationFrame id once it's set.
+  const rafId = useRef<number | undefined>(undefined);
   const [hovering, setHovering] = useState(false);
   const [birdColor, setBirdColor] = useState('');
 
