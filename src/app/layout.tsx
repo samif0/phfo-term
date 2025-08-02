@@ -9,8 +9,8 @@ import InfiniteScroll from "@/components/infinite-scroll";
 import Copyright from "@/components/copyright";
 import NavigationTracker from "@/components/navigation-tracker";
 import { isAdmin } from "@/lib/auth";
-import Button from "@/components/btn";
 import CustomCursor from "@/components/custom-cursor";
+import LogoutButton from "@/components/logout-button";
 
 export const viewport: Viewport = {
   themeColor: "#f4f1ed",
@@ -50,13 +50,7 @@ export default async function RootLayout({
           <NavigationTracker />
           <ThemeToggle />
           <CustomCursor />
-          <div className="fixed top-4 left-4 z-50">
-            {admin && (
-              <form action="/api/logout" method="post">
-                <Button text="logout" variant="outline" size="small" />
-              </form>
-            )}
-          </div>
+          {admin && <LogoutButton />}
           <main className="flex min-h-screen flex-col">
             <div className="flex-grow pb-16">
               {children}

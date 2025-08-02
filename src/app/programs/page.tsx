@@ -2,8 +2,8 @@ import Link from 'next/link';
 import NavigationButton from '@/components/navigation-button';
 import { getAllPrograms } from '@/lib/data/programs';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
-import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import Button from '@/components/btn';
+import AdminPanel from '@/components/admin-panel';
 import Boids from '@/components/boids';
 import { isAdmin } from '@/lib/auth';
 
@@ -26,18 +26,7 @@ export default async function ProgramsPage() {
           </Link>
         ))}
       </div>
-      {admin && (
-        <Link
-          href="/programs/new"
-          className="absolute top-4 left-4 z-10"
-        >
-          <Button
-            text="add program"
-            variant="ghost"
-            icon={<PlusIcon className="h-4 w-4" />}
-          />
-        </Link>
-      )}
+      {admin && <AdminPanel addHref="/programs/new" />}
       <NavigationButton />
     </div>
     )

@@ -1,10 +1,7 @@
 'use client';
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home } from "lucide-react";
-
-import "./components.css";
-import Button from "./btn";
+import { Home, ArrowLeft } from "lucide-react";
 
 export default function NavigationButton() {
   const router = useRouter();
@@ -35,24 +32,29 @@ export default function NavigationButton() {
     return null;
   }
 
+  const commonClass =
+    'p-2 border border-[var(--foreground)] bg-[var(--background)] text-[var(--foreground)] rounded-md transition-colors duration-200 hover:bg-[var(--foreground)] hover:text-[var(--background)]';
+
   return (
     <div className="fixed bottom-4 left-4 z-50 flex gap-2">
       {showBackButton && (
-        <Button
+        <button
           onClick={() => {
             sessionStorage.removeItem('cameFromHome');
             router.back();
           }}
-          className="text-white hover:text-gray-300"
-          text="go back"
-        />
+          className={commonClass}
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
       )}
       <button
         onClick={() => router.push('/')}
-        className="p-2 bg-gray-800 text-white hover:bg-gray-700 rounded-lg transition-colors duration-200 flex items-center gap-2"
+        className={commonClass}
         aria-label="Go to home"
       >
-        <Home className="w-5 h-5" />
+        <Home className="w-4 h-4" />
       </button>
     </div>
   );

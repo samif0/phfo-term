@@ -22,7 +22,7 @@ export default function Program({ content, videoName, githubUrl }: ProgramProps)
         
         {videoName && (
           <div className="video-container-minimal">
-            <video controls className="video-minimal">
+            <video controls playsInline className="video-minimal">
               <source src={videoSrc} type="video/mp4" />
               Your browser does not support the video tag.
             </video>

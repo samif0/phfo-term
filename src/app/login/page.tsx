@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Button from '@/components/btn';
-import GoBack from '@/components/goback';
+import NavigationButton from '@/components/navigation-button';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
@@ -47,7 +47,7 @@ export default function LoginPage() {
           {error && <p className="text-red-500">{error}</p>}
         </form>
       </div>
-      <GoBack />
+      <NavigationButton />
     </>
   );
 }
