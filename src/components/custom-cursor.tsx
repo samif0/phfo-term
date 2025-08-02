@@ -1,16 +1,29 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 
 export default function CustomCursor() {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: 0, y: 0 });
+  const rafId = useRef<number>();
   const [hovering, setHovering] = useState(false);
   const [birdColor, setBirdColor] = useState('');
 
   useEffect(() => {
+    const updatePosition = () => {
+      if (cursorRef.current) {
+        const { x, y } = pos.current;
+        cursorRef.current.style.left = `${x}px`;
+        cursorRef.current.style.top = `${y}px`;
+      }
+      rafId.current = undefined;
+    };
     const handleMove = (e: MouseEvent) => {
-      setPos({ x: e.clientX, y: e.clientY });
+      pos.current = { x: e.clientX, y: e.clientY };
+      if (rafId.current === undefined) {
+        rafId.current = requestAnimationFrame(updatePosition);
+      }
     };
     const handleOver = (e: Event) => {
       const target = e.target as HTMLElement;
@@ -44,13 +57,16 @@ export default function CustomCursor() {
       document.removeEventListener('pointermove', handleMove);
       document.removeEventListener('pointerover', handleOver);
       document.removeEventListener('pointerout', handleOut);
+      if (rafId.current !== undefined) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
   }, []);
 
   return (
     <div
+      ref={cursorRef}
       className={`custom-cursor ${hovering ? 'hover' : ''}`}
-      style={{ left: pos.x, top: pos.y }}
     >
       <svg className="cursor-outer" width="24" height="24">
         <circle cx="12" cy="12" r="11" />
