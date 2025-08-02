@@ -28,10 +28,17 @@ html {
   body {
     color: var(--foreground);
     background: var(--background);
+    cursor: none;
     transition: background-color 0.3s ease, color 0.3s ease;
     min-height: 100%;
     overflow-x: hidden;
   }
+
+/* hide native cursor on interactive elements too */
+a,
+button {
+  cursor: none;
+}
 
   @media (max-width: 640px) {
     body {
@@ -50,4 +57,92 @@ html {
 
 .blink {
   animation: blink 1s step-start infinite;
+}
+
+/* custom cursor styles */
+.custom-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.custom-cursor .cursor-outer circle {
+  stroke: var(--foreground);
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 69;
+  stroke-dashoffset: 0;
+  transition: opacity 0.3s;
+}
+
+.custom-cursor.hover .cursor-outer circle {
+  animation: cursor-ring 0.6s forwards;
+}
+
+@keyframes cursor-ring {
+  0% { stroke-dashoffset: 0; opacity: 1; }
+  80% { stroke-dashoffset: 69; opacity: 1; }
+  100% { stroke-dashoffset: 69; opacity: 0; }
+}
+
+.custom-cursor .cursor-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  background: var(--foreground);
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.custom-cursor.hover .cursor-inner {
+  transform: scale(0.8);
+}
+
+.custom-cursor .cursor-birds {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+}
+
+.custom-cursor .bird {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--bird-color, var(--foreground));
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.custom-cursor .bird:nth-child(1) { --tx: 12px; --ty: 0px; }
+.custom-cursor .bird:nth-child(2) { --tx: 8px; --ty: 8px; }
+.custom-cursor .bird:nth-child(3) { --tx: 0px; --ty: 12px; }
+.custom-cursor .bird:nth-child(4) { --tx: -8px; --ty: 8px; }
+.custom-cursor .bird:nth-child(5) { --tx: -12px; --ty: 0px; }
+.custom-cursor .bird:nth-child(6) { --tx: -8px; --ty: -8px; }
+.custom-cursor .bird:nth-child(7) { --tx: 0px; --ty: -12px; }
+.custom-cursor .bird:nth-child(8) { --tx: 8px; --ty: -8px; }
+
+.custom-cursor.hover .bird {
+  animation: bird-fly 0.6s forwards, bird-hover 2s 0.6s ease-in-out infinite;
+}
+
+@keyframes bird-fly {
+  0% { opacity: 0; transform: translate(0,0); }
+  60% { opacity: 1; transform: translate(var(--tx), var(--ty)); }
+  100% { opacity: 1; transform: translate(var(--tx), var(--ty)); }
+}
+
+@keyframes bird-hover {
+  0% { transform: translate(var(--tx), var(--ty)) scale(1); }
+  50% { transform: translate(calc(var(--tx)*0.9), calc(var(--ty)*0.9)) scale(1); }
+  100% { transform: translate(var(--tx), var(--ty)) scale(1); }
 }
