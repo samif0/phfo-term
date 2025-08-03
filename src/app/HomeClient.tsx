@@ -63,6 +63,19 @@ export default function HomeClient({ admin }: { admin: boolean }) {
     </>
   );
 
+  const ScrollUpArrow = () => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="w-6 h-6 mb-4 text-red-800 dark:text-gray-400 blink"
+      aria-hidden="true"
+    >
+      <path d="M12 4l-6 6h4v8h4v-8h4l-6-6z" />
+    </svg>
+  );
+
   return (
     <>
       <nav
@@ -83,9 +96,14 @@ export default function HomeClient({ admin }: { admin: boolean }) {
         </div>
       )}
       <section className="flex flex-col items-center justify-end min-h-screen pb-16 md:pb-20">
-        <div className="flex justify-center gap-4">
-          <Buttons />
-        </div>
+        {!showNav && (
+          <>
+            <ScrollUpArrow />
+            <div className="flex justify-center gap-4">
+              <Buttons />
+            </div>
+          </>
+        )}
       </section>
       <section className="max-w-3xl mx-auto mt-20 space-y-6 bg-[rgba(var(--background-rgb),0.6)] backdrop-blur-md p-6 text-red-700 dark:text-gray-300">
         <div className="text-center sm:text-left">
