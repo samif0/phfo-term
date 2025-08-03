@@ -3,11 +3,20 @@
 import Button from '@/components/btn';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 export default function HomeClient({ admin }: { admin: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showNav, setShowNav] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowNav(window.scrollY > window.innerHeight * 0.1);
+    };
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const Buttons = ({ onClick }: { onClick?: () => void } = {}) => (
     <>
@@ -56,7 +65,9 @@ export default function HomeClient({ admin }: { admin: boolean }) {
 
   return (
     <>
-      <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-sm flex justify-center sm:justify-center gap-4 py-2 z-40">
+      <nav
+        className={`fixed top-0 w-full bg-[rgba(var(--background-rgb),0.8)] backdrop-blur-sm flex justify-center sm:justify-center gap-4 py-2 z-40 transition-opacity ${showNav ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      >
         <div className="hidden sm:flex gap-4">
           <Buttons />
         </div>
@@ -66,12 +77,17 @@ export default function HomeClient({ admin }: { admin: boolean }) {
           </button>
         </div>
       </nav>
-      {menuOpen && (
-        <div className="sm:hidden fixed top-10 left-0 right-0 bg-background/95 backdrop-blur-md flex flex-col items-center gap-2 py-4 z-40">
+      {menuOpen && showNav && (
+        <div className="sm:hidden fixed top-10 left-0 right-0 bg-[rgba(var(--background-rgb),0.95)] backdrop-blur-md flex flex-col items-center gap-2 py-4 z-40">
           <Buttons onClick={() => setMenuOpen(false)} />
         </div>
       )}
-      <section className="max-w-3xl mx-auto mt-24 space-y-6 bg-background/60 backdrop-blur-md p-6 text-red-700 dark:text-gray-300">
+      <section className="flex flex-col items-center justify-end min-h-screen pb-16 md:pb-20">
+        <div className="flex justify-center gap-4">
+          <Buttons />
+        </div>
+      </section>
+      <section className="max-w-3xl mx-auto mt-20 space-y-6 bg-[rgba(var(--background-rgb),0.6)] backdrop-blur-md p-6 text-red-700 dark:text-gray-300">
         <div className="text-center sm:text-left">
           <h1 className="text-4xl sm:text-5xl font-semibold text-red-800 dark:text-gray-400">hello.</h1>
           <h2 className="mt-2 text-xl sm:text-2xl" style={{ color: 'rgba(180, 90, 70, 0.9)' }}>
