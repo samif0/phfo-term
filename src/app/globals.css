@@ -11,12 +11,16 @@ canvas {
   /* Default dark theme - richer reddish brown */
   --background: #3d221b;
   --foreground: #f8ede3;
+  --background-rgb: 61 34 27;
+  --foreground-rgb: 248 237 227;
 }
 
 .light {
   /* Anthropic-inspired warm beige theme */
   --background: #f4f1ed;
   --foreground: #5a2d24;
+  --background-rgb: 244 241 237;
+  --foreground-rgb: 90 45 36;
 }
 
 html {
