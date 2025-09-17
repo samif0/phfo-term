@@ -12,6 +12,11 @@ export const playgroundPrograms: Record<string, PlaygroundProgram> = {
     name: 'L-Systems',
     description: 'Lindenmayer Systems - Algorithmic generation of organic patterns',
   },
+  'mlp-visualizer': {
+    id: 'mlp-visualizer',
+    name: 'MLP Playground',
+    description: 'Train a configurable multi-layer perceptron on clustered 2D points',
+  },
   // Add more playground programs here in the future
   // 'langtons-ant': {
   //   id: 'langtons-ant',

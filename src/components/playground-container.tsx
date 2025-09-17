@@ -8,6 +8,7 @@ import Button from '@/components/btn';
 const playgroundComponents: Record<string, React.LazyExoticComponent<React.ComponentType<PlaygroundControls>>> = {
   'game-of-life': lazy(() => import('@/components/playgrounds/game-of-life')),
   'l-systems': lazy(() => import('@/components/playgrounds/l-systems')),
+  'mlp-visualizer': lazy(() => import('@/components/playgrounds/mlp-visualizer')),
   // Add more components here as needed
 };
 
