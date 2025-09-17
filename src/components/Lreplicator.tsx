@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useTheme } from './theme-provider';
 
 // States for minimal self-replicator
@@ -40,7 +40,7 @@ export default function Lreplicator() {
     const CELL_SIZE = 8; // Larger cells for less density
 
     // Initialize grid with a single seed
-    const initGrid = (width: number, height: number) => {
+    const initGrid = useCallback((width: number, height: number) => {
         const grid: number[][] = [];
         for (let y = 0; y < height; y++) {
             grid[y] = new Array(width).fill(0);
@@ -52,10 +52,10 @@ export default function Lreplicator() {
         grid[centerY][centerX] = 1;
 
         gridRef.current = grid;
-    };
+    }, []);
 
     // Count active neighbors
-    const countActiveNeighbors = (grid: number[][], x: number, y: number, width: number, height: number): number => {
+    const countActiveNeighbors = useCallback((grid: number[][], x: number, y: number, width: number, height: number): number => {
         let count = 0;
         const directions = [
             [-1, -1], [-1, 0], [-1, 1],
@@ -72,10 +72,10 @@ export default function Lreplicator() {
         }
 
         return count;
-    };
+    }, []);
 
     // Update grid with deterministic self-replication rules
-    const updateGrid = (width: number, height: number) => {
+    const updateGrid = useCallback((width: number, height: number) => {
         const grid = gridRef.current;
         const newGrid: number[][] = [];
 
@@ -114,9 +114,9 @@ export default function Lreplicator() {
         }
 
         gridRef.current = newGrid;
-    };
+    }, [countActiveNeighbors]);
 
-    const draw = (width: number, height: number) => {
+    const draw = useCallback((width: number, height: number) => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (!ctx || !canvas) return;
@@ -142,7 +142,7 @@ export default function Lreplicator() {
                 }
             }
         }
-    };
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -192,7 +192,7 @@ export default function Lreplicator() {
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, []);
+    }, [CELL_SIZE, draw, initGrid, updateGrid]);
 
     // Trigger redraw when theme changes
     useEffect(() => {
@@ -200,7 +200,7 @@ export default function Lreplicator() {
         if (dimensionsRef.current.width > 0 && dimensionsRef.current.height > 0) {
             draw(dimensionsRef.current.width, dimensionsRef.current.height);
         }
-    }, [theme]);
+    }, [draw, theme]);
 
     return (
         <canvas

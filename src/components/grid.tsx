@@ -1,7 +1,7 @@
 'use client';
 
 import { useImmer } from 'use-immer';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import './components.css';
 
 interface GridProps {
@@ -18,29 +18,27 @@ export default function Grid({rows, cols}: GridProps) {
     const lastUpdateTime = useRef(0);
     const frameDelay = 500;
 
-    function updateCell(row: number, col: number, value: number) {
-        setGrid(draft => {
-            draft[row][col] = value;
-        });
-    }
+    const updateGrid = useCallback(() => {
+        let ma = Number.MIN_SAFE_INTEGER;
+        let mi = Number.MAX_SAFE_INTEGER;
 
-    function updateGrid() {
         setGrid(draft => {
-            let ma = Number.MIN_SAFE_INTEGER;
-            let mi = Number.MAX_SAFE_INTEGER;
-            for(let i = 0; i < rows; i++) {
-                for(let j = 0; j < cols; j++) {
-                    const val = draft[i][j] >= 100 ? Math.floor(draft[i][j] - (Math.random()*10)) : Math.ceil(draft[i][j] + (Math.random()*10));
-                    updateCell(i, j, val);
-                    mi = Math.min(val, mi)
-                    ma = Math.max(val, ma)
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const current = draft[i][j];
+                    const delta = Math.random() * 10;
+                    const val = current >= 100 ? Math.floor(current - delta) : Math.ceil(current + delta);
+                    draft[i][j] = val;
+                    mi = Math.min(val, mi);
+                    ma = Math.max(val, ma);
                 }
             }
-            setMin(mi)
-            setMax(ma)
         });
+
+        setMin(mi);
+        setMax(ma);
         setGeneration(prev => prev + 1);
-    }
+    }, [cols, rows, setGrid, setGeneration, setMax, setMin]);
 
     useEffect(() => {
         let animationFrameId: number;
@@ -65,7 +63,7 @@ export default function Grid({rows, cols}: GridProps) {
             }
         };
 
-    }, [isRunning]);
+    }, [isRunning, updateGrid]);
 
     return (
         <div>

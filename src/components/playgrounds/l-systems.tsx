@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { PlaygroundControls } from '@/lib/playground-types';
 import { useTheme } from '@/components/theme-provider';
 
@@ -93,11 +93,11 @@ export default function LSystems({ isRunning, isPaused }: PlaygroundControls) {
   isPausedRef.current = isPaused;
 
   // Theme-based colors
-  const colors = {
+  const colors = useMemo(() => ({
     background: theme === 'dark' ? '#0A0A0A' : '#F4F1ED',
     line: theme === 'dark' ? '#10B981' : '#059669',
     branch: theme === 'dark' ? '#8B5CF6' : '#7C3AED',
-  };
+  }), [theme]);
 
   // Generate L-System string for given iterations
   const generateLSystem = useCallback((config: LSystemConfig, iterations: number): string => {
@@ -284,7 +284,7 @@ export default function LSystems({ isRunning, isPaused }: PlaygroundControls) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRunning]);
+  }, [animate, isRunning]);
 
   // Redraw when theme or system changes
   useEffect(() => {

@@ -288,8 +288,6 @@ export default function MLPVisualizer({
   const networkRef = useRef<NetworkState | null>(null);
   const metricsRef = useRef<TrainingMetrics>({ step: 0, loss: 0, accuracy: 0 });
 
-  const layerSizes = useMemo(() => [inputSize, ...hiddenLayers, outputSize], [inputSize, hiddenLayers, outputSize]);
-
   const resetMetrics = useCallback(() => {
     metricsRef.current = { step: 0, loss: 0, accuracy: 0 };
     setStep(0);
@@ -372,6 +370,7 @@ export default function MLPVisualizer({
   }, [applyTrainingStep, isPaused, isRunning]);
 
   const predictions = useMemo(() => {
+    void renderTick; // ensure memo invalidates when training advances
     if (!networkRef.current) {
       return [] as { point: DataPoint; predicted: number; confidence: number }[];
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { PlaygroundControls } from '@/lib/playground-types';
 import { useTheme } from '@/components/theme-provider';
 
@@ -20,11 +20,11 @@ export default function GameOfLife({ isRunning, isPaused }: PlaygroundControls) 
   isPausedRef.current = isPaused;
   
   // Theme-based colors
-  const colors = {
+  const colors = useMemo(() => ({
     grid: theme === 'dark' ? '#374151' : '#E5E7EB',
     alive: theme === 'dark' ? '#10B981' : '#059669',
     dead: theme === 'dark' ? '#0A0A0A' : '#F4F1ED',
-  };
+  }), [theme]);
 
   const initializeGrid = useCallback((width: number, height: number, pattern: 'random' | 'empty' | 'glider' | 'blinker' | 'toad' | 'beacon' | 'pulsar' | 'pentadecathlon' | 'gosper-gun' | 'lightweight-spaceship' | 'middleweight-spaceship' | 'heavyweight-spaceship' | 'r-pentomino' | 'b-heptomino' = 'empty') => {
     const cols = Math.floor(width / CELL_SIZE);
@@ -400,7 +400,7 @@ export default function GameOfLife({ isRunning, isPaused }: PlaygroundControls) 
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRunning]);
+  }, [animate, isRunning]);
 
   // Handle canvas click to toggle cells
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {

@@ -386,7 +386,7 @@ export default function Boids() {
         });
       }
       
-    }, [pathname]);
+    }, [pathname, imageMap, theme]);
 
     // Update worker theme when theme changes
   useEffect(() => {
