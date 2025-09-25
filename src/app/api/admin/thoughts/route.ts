@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdmin } from '@/lib/auth';
 import { PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { getDocClient } from '@/lib/dynamodb';
+import { getDataTableName } from '@/lib/data/table';
 
 export async function POST(req: Request) {
   if (!(await isAdmin())) {
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
   const data = await req.json();
   const client = getDocClient();
   const command = new PutCommand({
-    TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+    TableName: getDataTableName(),
     Item: {
       '{contentType}#{slug}': `thought#${data.slug}`,
       metadata: 'metadata',
@@ -30,7 +31,7 @@ export async function PUT(req: Request) {
   const data = await req.json();
   const client = getDocClient();
   const command = new PutCommand({
-    TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+    TableName: getDataTableName(),
     Item: {
       '{contentType}#{slug}': `thought#${data.slug}`,
       metadata: 'metadata',
@@ -50,7 +51,7 @@ export async function DELETE(req: Request) {
   const { slug } = await req.json();
   const client = getDocClient();
   const command = new DeleteCommand({
-    TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+    TableName: getDataTableName(),
     Key: {
       '{contentType}#{slug}': `thought#${slug}`,
       metadata: 'metadata',

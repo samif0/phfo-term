@@ -1,5 +1,6 @@
 import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { getDocClient } from '../dynamodb';
+import { getDataTableName } from './table';
 import { WritingData } from "./types";
 
 export async function getAllWritings(): Promise<WritingData[]> {
@@ -7,7 +8,7 @@ export async function getAllWritings(): Promise<WritingData[]> {
 
   try {
     const command = new ScanCommand({
-      TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+      TableName: getDataTableName(),
       FilterExpression: "begins_with(#pk, :prefix)",
       ExpressionAttributeNames: {
         "#pk": "{contentType}#{slug}",
@@ -36,7 +37,7 @@ export async function getWriting(slug: string): Promise<WritingData | undefined>
 
   try {
     const command = new GetCommand({
-      TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+      TableName: getDataTableName(),
       Key: {
         '{contentType}#{slug}': `writing#${slug}`,
         metadata: "metadata",

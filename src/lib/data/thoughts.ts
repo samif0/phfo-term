@@ -1,5 +1,6 @@
 import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { getDocClient } from '../dynamodb';
+import { getDataTableName } from './table';
 import { ThoughtData } from "./types";
 
 export async function getAllThoughts(): Promise<ThoughtData[]> {
@@ -7,7 +8,7 @@ export async function getAllThoughts(): Promise<ThoughtData[]> {
 
   try {
     const command = new ScanCommand({
-      TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+      TableName: getDataTableName(),
       FilterExpression: "begins_with(#pk, :prefix)",
       ExpressionAttributeNames: {
         "#pk": "{contentType}#{slug}",
@@ -35,7 +36,7 @@ export async function getThought(slug: string): Promise<ThoughtData | undefined>
 
   try {
     const command = new GetCommand({
-      TableName: process.env.DYNAMODB_DATA_TABLE_NAME,
+      TableName: getDataTableName(),
       Key: {
         '{contentType}#{slug}': `thought#${slug}`,
         metadata: "metadata",
