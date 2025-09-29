@@ -109,7 +109,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
         <div className="text-center sm:text-left">
           <h1 className="text-4xl sm:text-5xl font-semibold text-red-800 dark:text-gray-400">hello.</h1>
           <h2 className="mt-2 text-xl sm:text-2xl" style={{ color: 'rgba(180, 90, 70, 0.9)' }}>
-            research analyst @ UW Computational Neuroscience Center | RPI CS &apos;23
+            research analyst @ Allen Institute for Brain Science | RPI CS &apos;23
           </h2>
           <p className="mt-1 text-base text-red-700/80 dark:text-gray-400">previously: software engineer @ AWS</p>
           <p className="mt-4 text-red-800 dark:text-gray-400">
