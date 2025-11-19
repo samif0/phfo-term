@@ -24,10 +24,18 @@ export async function getAdminPassword(): Promise<string> {
     throw new Error('SecretString missing in secret');
   }
 
-  const secret = JSON.parse(secretString);
-  const password = secret['ADMIN_PASSWORD'];
+  let secret: Record<string, string>;
+  try {
+    secret = JSON.parse(secretString);
+  } catch {
+    cachedPassword = secretString;
+    return cachedPassword;
+  }
+
+  const password =
+    secret['ADMIN_PASSWORD'] || secret['ADMIN_PASSWORD_SECRET_NAME'] || secret['password'];
   if (!password) {
-    throw new Error('ADMIN_PASSWORD key missing in secret');
+    throw new Error('Admin password missing in secret');
   }
   cachedPassword = password;
   return password;
