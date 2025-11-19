@@ -20,6 +20,8 @@ export default function LoginPage() {
     });
     if (res.ok) {
       router.push('/');
+    } else if (res.status === 500) {
+      setError('server error: check admin password configuration');
     } else {
       setError('invalid password');
     }
