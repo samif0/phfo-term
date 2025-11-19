@@ -7,6 +7,12 @@ export async function getAdminPassword(): Promise<string> {
     return cachedPassword;
   }
 
+  const envPassword = process.env.ADMIN_PASSWORD?.trim();
+  if (envPassword) {
+    cachedPassword = envPassword;
+    return envPassword;
+  }
+
   const secretName =
     process.env.ADMIN_PASSWORD_SECRET_NAME ||
     process.env.ADMIN_PASSWORD_SECRET_KEY;
@@ -28,12 +34,13 @@ export async function getAdminPassword(): Promise<string> {
   try {
     secret = JSON.parse(secretString);
   } catch {
-    cachedPassword = secretString;
+    cachedPassword = secretString.trim();
     return cachedPassword;
   }
 
-  const password =
+  const rawPassword =
     secret['ADMIN_PASSWORD'] || secret['ADMIN_PASSWORD_SECRET_NAME'] || secret['password'];
+  const password = rawPassword?.trim();
   if (!password) {
     throw new Error('Admin password missing in secret');
   }
