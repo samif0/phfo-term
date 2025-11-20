@@ -1,27 +1,22 @@
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
+import { getAdminTokenSecret } from './secrets';
 
-function getSecret() {
-  const secret = process.env.ADMIN_TOKEN_SECRET;
-  if (!secret) {
-    throw new Error('ADMIN_TOKEN_SECRET not set');
-  }
-  return secret;
-}
-
-function sign(payload: string) {
-  const h = crypto.createHmac('sha256', getSecret());
+async function sign(payload: string) {
+  const secret = await getAdminTokenSecret();
+  const h = crypto.createHmac('sha256', secret);
   h.update(payload);
   const signature = h.digest('hex');
   return `${payload}.${signature}`;
 }
 
-function verify(token: string): string | null {
+async function verify(token: string): Promise<string | null> {
   const idx = token.lastIndexOf('.');
   if (idx === -1) return null;
   const payload = token.slice(0, idx);
   const signature = token.slice(idx + 1);
-  const h = crypto.createHmac('sha256', getSecret());
+  const secret = await getAdminTokenSecret();
+  const h = crypto.createHmac('sha256', secret);
   h.update(payload);
   const expected = h.digest('hex');
   const sigBuf = Buffer.from(signature);
@@ -31,7 +26,7 @@ function verify(token: string): string | null {
   return valid ? payload : null;
 }
 
-export function createAdminToken() {
+export async function createAdminToken() {
   const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 24h
   return sign(`admin:${exp}`);
 }
@@ -40,7 +35,7 @@ export async function isAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get('adminAuth')?.value;
   if (!token) return false;
-  const payload = verify(token);
+  const payload = await verify(token);
   if (!payload) return false;
   const [role, exp] = payload.split(':');
   if (role !== 'admin') return false;
