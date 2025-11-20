@@ -1,28 +1,10 @@
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
-import { getAdminPassword } from './secrets';
-
-let cachedTokenSecret: string | undefined;
-
-async function getSecret() {
-  if (cachedTokenSecret) {
-    return cachedTokenSecret;
-  }
-
-  const envSecret = process.env.ADMIN_TOKEN_SECRET?.trim();
-  if (envSecret) {
-    cachedTokenSecret = envSecret;
-    return cachedTokenSecret;
-  }
-
-  const adminPassword = await getAdminPassword();
-  cachedTokenSecret = `derived:${adminPassword}`;
-  console.warn('ADMIN_TOKEN_SECRET not set; deriving from admin password');
-  return cachedTokenSecret;
-}
+import { getAdminTokenSecret } from './secrets';
 
 async function sign(payload: string) {
-  const h = crypto.createHmac('sha256', await getSecret());
+  const secret = await getAdminTokenSecret();
+  const h = crypto.createHmac('sha256', secret);
   h.update(payload);
   const signature = h.digest('hex');
   return `${payload}.${signature}`;
@@ -33,7 +15,8 @@ async function verify(token: string): Promise<string | null> {
   if (idx === -1) return null;
   const payload = token.slice(0, idx);
   const signature = token.slice(idx + 1);
-  const h = crypto.createHmac('sha256', await getSecret());
+  const secret = await getAdminTokenSecret();
+  const h = crypto.createHmac('sha256', secret);
   h.update(payload);
   const expected = h.digest('hex');
   const sigBuf = Buffer.from(signature);

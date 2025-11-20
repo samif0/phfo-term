@@ -1,10 +1,10 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
-let cachedPassword: string | undefined;
+let cachedSecrets: { password: string; tokenSecret?: string } | null = null;
 
-export async function getAdminPassword(): Promise<string> {
-  if (cachedPassword) {
-    return cachedPassword;
+async function loadSecrets() {
+  if (cachedSecrets) {
+    return cachedSecrets;
   }
 
   const envPassword = process.env.ADMIN_PASSWORD?.trim();
@@ -14,36 +14,59 @@ export async function getAdminPassword(): Promise<string> {
   }
 
   const secretName =
-    process.env.ADMIN_PASSWORD_SECRET_NAME ||
-    process.env.ADMIN_PASSWORD_SECRET_KEY;
+    process.env.ADMIN_PASSWORD_SECRET_NAME || process.env.ADMIN_PASSWORD_SECRET_KEY;
+
   if (!secretName) {
-    throw new Error(
-      'ADMIN_PASSWORD_SECRET_NAME or ADMIN_PASSWORD_SECRET_KEY env var not set'
-    );
+    throw new Error('ADMIN_PASSWORD_SECRET_NAME or ADMIN_PASSWORD_SECRET_KEY env var not set');
   }
 
   const client = new SecretsManagerClient({ region: process.env.AWS_REGION });
   const command = new GetSecretValueCommand({ SecretId: secretName });
   const response = await client.send(command);
   const secretString = response.SecretString;
+
   if (!secretString) {
     throw new Error('SecretString missing in secret');
   }
 
-  let secret: Record<string, string>;
   try {
-    secret = JSON.parse(secretString);
-  } catch {
-    cachedPassword = secretString.trim();
-    return cachedPassword;
+    const secret = JSON.parse(secretString) as Record<string, string>;
+    const password = secret.ADMIN_PASSWORD?.trim() || secret.password?.trim();
+    const tokenSecret = secret.ADMIN_TOKEN_SECRET?.trim() || secret.tokenSecret?.trim();
+
+    if (!password) {
+      throw new Error('Admin password missing in secret');
+    }
+
+    cachedSecrets = { password, tokenSecret };
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Admin password missing in secret') {
+      throw error;
+    }
+
+    cachedSecrets = { password: secretString.trim() };
   }
 
-  const rawPassword =
-    secret['ADMIN_PASSWORD'] || secret['ADMIN_PASSWORD_SECRET_NAME'] || secret['password'];
-  const password = rawPassword?.trim();
-  if (!password) {
-    throw new Error('Admin password missing in secret');
-  }
-  cachedPassword = password;
+  console.info('[auth] loaded admin secrets from Secrets Manager', {
+    hasPassword: Boolean(cachedSecrets.password),
+    hasTokenSecret: Boolean(cachedSecrets.tokenSecret)
+  });
+
+  return cachedSecrets;
+}
+
+export async function getAdminPassword(): Promise<string> {
+  const { password } = await loadSecrets();
   return password;
+}
+
+export async function getAdminTokenSecret(): Promise<string> {
+  const { password, tokenSecret } = await loadSecrets();
+
+  if (tokenSecret) {
+    return tokenSecret;
+  }
+
+  console.warn('[auth] ADMIN_TOKEN_SECRET missing in secret; deriving from password');
+  return `derived:${password}`;
 }
