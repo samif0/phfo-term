@@ -20,10 +20,9 @@ async function loadSecrets() {
 
   const client = new SecretsManagerClient({ region: process.env.AWS_REGION });
   const command = new GetSecretValueCommand({ SecretId: secretName });
-  let secretString: string | undefined;
 
   const response = await client.send(command);
-  secretString = response.SecretString;
+  const secretString = response.SecretString;
 
   if (!secretString) throw new Error('SecretString missing in secret');
 
