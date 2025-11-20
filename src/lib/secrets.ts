@@ -11,6 +11,7 @@ async function loadSecrets() {
     process.env.ADMIN_PASSWORD_SECRET_NAME || process.env.ADMIN_PASSWORD_SECRET_KEY;
 
   if (!secretName) {
+    console.error('[auth] loadSecrets error', { stage: 'noSecretName', env: process.env });
     throw new Error('ADMIN_PASSWORD_SECRET_NAME or ADMIN_PASSWORD_SECRET_KEY env var not set');
   }
 
@@ -20,6 +21,11 @@ async function loadSecrets() {
   const secretString = response.SecretString;
 
   if (!secretString) {
+    console.error('[auth] loadSecrets error', {
+      stage: 'noSecretString',
+      secretName,
+      region: process.env.AWS_REGION
+    });
     throw new Error('SecretString missing in secret');
   }
 
@@ -29,6 +35,7 @@ async function loadSecrets() {
     const tokenSecret = secret.ADMIN_TOKEN_SECRET?.trim() || secret.tokenSecret?.trim();
 
     if (!password) {
+      console.error('[auth] loadSecrets error', { stage: 'missingPasswordKey', secretString });
       throw new Error('Admin password missing in secret');
     }
 
