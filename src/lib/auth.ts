@@ -28,7 +28,8 @@ async function verify(token: string): Promise<string | null> {
 
 export async function createAdminToken() {
   const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 24h
-  return sign(`admin:${exp}`);
+  const token = await sign(`admin:${exp}`);
+  return token;
 }
 
 export async function isAdmin() {
