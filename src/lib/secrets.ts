@@ -7,12 +7,6 @@ async function loadSecrets() {
     return cachedSecrets;
   }
 
-  const envPassword = process.env.ADMIN_PASSWORD?.trim();
-  if (envPassword) {
-    cachedPassword = envPassword;
-    return envPassword;
-  }
-
   const secretName =
     process.env.ADMIN_PASSWORD_SECRET_NAME || process.env.ADMIN_PASSWORD_SECRET_KEY;
 
