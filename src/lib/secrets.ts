@@ -3,7 +3,13 @@ import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-sec
 let cachedSecrets: { password: string; tokenSecret?: string } | null = null;
 
 async function loadSecrets() {
+  console.info('[auth] loadSecrets invoked');
+
   if (cachedSecrets) {
+    console.info('[auth] loadSecrets returning cached secrets', {
+      hasPassword: Boolean(cachedSecrets.password),
+      hasTokenSecret: Boolean(cachedSecrets.tokenSecret)
+    });
     return cachedSecrets;
   }
 
@@ -17,8 +23,20 @@ async function loadSecrets() {
 
   const client = new SecretsManagerClient({ region: process.env.AWS_REGION });
   const command = new GetSecretValueCommand({ SecretId: secretName });
-  const response = await client.send(command);
-  const secretString = response.SecretString;
+  let secretString: string | undefined;
+
+  try {
+    const response = await client.send(command);
+    secretString = response.SecretString;
+  } catch (error) {
+    console.error('[auth] loadSecrets error', {
+      stage: 'secretsManagerFetchFailed',
+      secretName,
+      region: process.env.AWS_REGION,
+      error
+    });
+    throw error;
+  }
 
   if (!secretString) {
     console.error('[auth] loadSecrets error', {
@@ -45,6 +63,13 @@ async function loadSecrets() {
       throw error;
     }
 
+    console.error('[auth] loadSecrets error', {
+      stage: 'secretParseFailed',
+      secretName,
+      region: process.env.AWS_REGION,
+      error
+    });
+
     cachedSecrets = { password: secretString.trim() };
   }
 
@@ -57,12 +82,19 @@ async function loadSecrets() {
 }
 
 export async function getAdminPassword(): Promise<string> {
+  console.info('[auth] getAdminPassword invoked');
   const { password } = await loadSecrets();
+  console.info('[auth] getAdminPassword resolved');
   return password;
 }
 
 export async function getAdminTokenSecret(): Promise<string> {
+  console.info('[auth] getAdminTokenSecret invoked');
   const { password, tokenSecret } = await loadSecrets();
+
+  console.info('[auth] getAdminTokenSecret resolved', {
+    hasTokenSecret: Boolean(tokenSecret)
+  });
 
   if (tokenSecret) {
     return tokenSecret;
