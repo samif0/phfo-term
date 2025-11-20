@@ -3,10 +3,12 @@ import crypto from 'crypto';
 import { getAdminTokenSecret } from './secrets';
 
 async function sign(payload: string) {
+  console.info('[auth] sign invoked');
   const secret = await getAdminTokenSecret();
   const h = crypto.createHmac('sha256', secret);
   h.update(payload);
   const signature = h.digest('hex');
+  console.info('[auth] sign resolved');
   return `${payload}.${signature}`;
 }
 
@@ -27,8 +29,11 @@ async function verify(token: string): Promise<string | null> {
 }
 
 export async function createAdminToken() {
+  console.info('[auth] createAdminToken invoked');
   const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 24h
-  return sign(`admin:${exp}`);
+  const token = await sign(`admin:${exp}`);
+  console.info('[auth] createAdminToken resolved');
+  return token;
 }
 
 export async function isAdmin() {
