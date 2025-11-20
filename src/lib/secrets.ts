@@ -3,7 +3,13 @@ import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-sec
 let cachedSecrets: { password: string; tokenSecret?: string } | null = null;
 
 async function loadSecrets() {
+  console.info('[auth] loadSecrets invoked');
+
   if (cachedSecrets) {
+    console.info('[auth] loadSecrets returning cached secrets', {
+      hasPassword: Boolean(cachedSecrets.password),
+      hasTokenSecret: Boolean(cachedSecrets.tokenSecret)
+    });
     return cachedSecrets;
   }
 
@@ -34,6 +40,13 @@ async function loadSecrets() {
       throw error;
     }
 
+    console.error('[auth] loadSecrets error', {
+      stage: 'secretParseFailed',
+      secretName,
+      region: process.env.AWS_REGION,
+      error
+    });
+
     cachedSecrets = { password: secretString.trim() };
   }
 
@@ -41,11 +54,14 @@ async function loadSecrets() {
 }
 
 export async function getAdminPassword(): Promise<string> {
+  console.info('[auth] getAdminPassword invoked');
   const { password } = await loadSecrets();
+  console.info('[auth] getAdminPassword resolved');
   return password;
 }
 
 export async function getAdminTokenSecret(): Promise<string> {
+  console.info('[auth] getAdminTokenSecret invoked');
   const { password, tokenSecret } = await loadSecrets();
   if (tokenSecret) {
     return tokenSecret;
