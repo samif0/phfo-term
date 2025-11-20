@@ -32,7 +32,6 @@ export async function createAdminToken() {
   console.info('[auth] createAdminToken invoked');
   const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 24h
   const token = await sign(`admin:${exp}`);
-  console.info('[auth] createAdminToken resolved');
   return token;
 }
 
