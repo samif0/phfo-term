@@ -103,9 +103,17 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
           setStatus(progressInfo.status);
         }
       },
+      config: {
+        // Ensure the model generates attention tensors when we ask for them during inference.
+        output_attentions: true,
+      },
     });
 
     const [tokenizer, model] = await Promise.all([tokenizerPromise, modelPromise]);
+    // Some models may ignore the config flag above when quantized; force it on for safety.
+    if (model.config) {
+      model.config.output_attentions = true;
+    }
     tokenizerRef.current = tokenizer;
     modelRef.current = model;
 
@@ -139,7 +147,9 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       setStatus('Running transformer...');
       const output = await model(tokenized, { output_attentions: true });
 
-      const attentions = (output as { attentions?: Tensor[] }).attentions;
+      const attentions =
+        (output as { attentions?: Tensor[]; encoder_attentions?: Tensor[] }).attentions ??
+        (output as { attentions?: Tensor[]; encoder_attentions?: Tensor[] }).encoder_attentions;
       if (!attentions || attentions.length === 0) {
         throw new Error('The model did not return attention maps.');
       }
