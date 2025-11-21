@@ -52,6 +52,8 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
   const [attention, setAttention] = useState<AttentionMap | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<number>(0);
   const [selectedHead, setSelectedHead] = useState<number>(0);
+  const [selectedToken, setSelectedToken] = useState<number>(0);
+  const [scoreMode, setScoreMode] = useState<'head' | 'layer-average'>('head');
 
   const tokenizerRef = useRef<PreTrainedTokenizer | null>(null);
   const modelRef = useRef<PreTrainedModel | null>(null);
@@ -61,6 +63,24 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
     env.allowLocalModels = false;
     env.useBrowserCache = true;
   }, []);
+
+  useEffect(() => {
+    if (!attention) return;
+    if (selectedLayer >= attention.layers.length) {
+      setSelectedLayer(Math.max(attention.layers.length - 1, 0));
+      setSelectedHead(0);
+      return;
+    }
+
+    const layer = attention.layers[selectedLayer];
+    if (selectedHead >= layer.length) {
+      setSelectedHead(0);
+    }
+
+    if (selectedToken >= attention.tokens.length) {
+      setSelectedToken(0);
+    }
+  }, [attention, selectedHead, selectedLayer, selectedToken]);
 
   const ensureModel = useCallback(async () => {
     if (tokenizerRef.current && modelRef.current) {
@@ -83,9 +103,17 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
           setStatus(progressInfo.status);
         }
       },
+      config: {
+        // Ensure the model generates attention tensors when we ask for them during inference.
+        output_attentions: true,
+      },
     });
 
     const [tokenizer, model] = await Promise.all([tokenizerPromise, modelPromise]);
+    // Some models may ignore the config flag above when quantized; force it on for safety.
+    if (model.config) {
+      model.config.output_attentions = true;
+    }
     tokenizerRef.current = tokenizer;
     modelRef.current = model;
 
@@ -119,7 +147,9 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       setStatus('Running transformer...');
       const output = await model(tokenized, { output_attentions: true });
 
-      const attentions = (output as { attentions?: Tensor[] }).attentions;
+      const attentions =
+        (output as { attentions?: Tensor[]; encoder_attentions?: Tensor[] }).attentions ??
+        (output as { attentions?: Tensor[]; encoder_attentions?: Tensor[] }).encoder_attentions;
       if (!attentions || attentions.length === 0) {
         throw new Error('The model did not return attention maps.');
       }
@@ -128,6 +158,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       setAttention({ tokens: readableTokens, layers: layerMaps });
       setSelectedLayer(layerMaps.length - 1);
       setSelectedHead(0);
+      setSelectedToken(0);
       setStatus(`Captured ${layerMaps.length} layers with ${layerMaps[0].length} heads each.`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error while running the model.';
@@ -162,11 +193,71 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       .slice(0, 5);
   }, [activeHead, attention]);
 
+  const calculatorScores = useMemo(() => {
+    if (!attention) return [] as { token: string; raw: number; normalized: number }[];
+
+    const layer = attention.layers[selectedLayer];
+    if (!layer) return [];
+
+    const collectFromHead = (headIdx: number) => {
+      const head = layer[headIdx];
+      if (!head) return [] as number[];
+      return head[selectedToken] ?? [];
+    };
+
+    const tokenCount = attention.tokens.length;
+
+    if (scoreMode === 'head') {
+      const row = collectFromHead(selectedHead);
+      const total = row.reduce((sum, value) => sum + value, 0) || 1;
+      return row.map((raw, idx) => ({
+        token: attention.tokens[idx],
+        raw,
+        normalized: raw / total,
+      }));
+    }
+
+    // layer-average: mean over all heads in the selected layer
+    const sums = Array.from({ length: tokenCount }, () => 0);
+    layer.forEach((head) => {
+      const row = head[selectedToken];
+      if (!row) return;
+      row.forEach((value, idx) => {
+        sums[idx] += value;
+      });
+    });
+
+    const headCount = layer.length || 1;
+    const averaged = sums.map((value) => value / headCount);
+    const total = averaged.reduce((sum, value) => sum + value, 0) || 1;
+
+    return averaged.map((raw, idx) => ({
+      token: attention.tokens[idx],
+      raw,
+      normalized: raw / total,
+    }));
+  }, [attention, scoreMode, selectedHead, selectedLayer, selectedToken]);
+
+  const sortedScores = useMemo(
+    () => calculatorScores.map((entry, idx) => ({ ...entry, idx })).sort((a, b) => b.raw - a.raw),
+    [calculatorScores],
+  );
+
   return (
     <div className="space-y-4 h-full">
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Enter text and press the Run button above. The playground loads a modern RoBERTa-base transformer from Hugging Face and displays the self-attention weights for your input.
       </p>
+
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/50 p-4 text-sm">
+        <div className="font-semibold mb-2">How this attention playground teaches the model&apos;s focus</div>
+        <ol className="list-decimal list-inside space-y-1 text-gray-600 dark:text-gray-300">
+          <li>Press <strong>Run</strong> to download a quantized RoBERTa transformer and tokenizer directly in the browser.</li>
+          <li>The tokenizer splits your text into subword tokens that become the rows/columns of the attention matrix.</li>
+          <li>Each row is a query token distributing attention across all key tokens (columns); darker cells mean stronger focus.</li>
+          <li>The calculator below summarizes those weights so you can see which words a token attends to most.</li>
+        </ol>
+      </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="attention-text">Input text</label>
@@ -181,7 +272,8 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="px-2 py-1 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60">
-          {status}{loadingModel ? ` (${progress}% )` : ''}
+          {status}
+          {loadingModel ? ` (${progress}%)` : ''}
         </span>
         {error && <span className="text-red-500">{error}</span>}
       </div>
@@ -263,6 +355,81 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
                     <li key={idx}>{formatToken(item.token)} — {(item.weight * 100).toFixed(1)}%</li>
                   ))}
                 </ul>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-3 bg-white/60 dark:bg-gray-900/40">
+                <div className="flex flex-col gap-1">
+                  <div className="font-semibold">Attention score calculator</div>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm">
+                    Pick a query token to see how the model distributes its attention. Use it to explain why certain words influence the representation more than others.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3 items-center text-sm">
+                  <label className="font-medium" htmlFor="token-picker">Query token</label>
+                  <select
+                    id="token-picker"
+                    className="rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-1"
+                    value={selectedToken}
+                    onChange={(e) => setSelectedToken(Number(e.target.value))}
+                  >
+                    {attention.tokens.map((token, idx) => (
+                      <option key={idx} value={idx}>
+                        {idx}: {formatToken(token)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="score-mode"
+                        value="head"
+                        checked={scoreMode === 'head'}
+                        onChange={() => setScoreMode('head')}
+                      />
+                      Selected head only
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="score-mode"
+                        value="layer-average"
+                        checked={scoreMode === 'layer-average'}
+                        onChange={() => setScoreMode('layer-average')}
+                      />
+                      Average across layer
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {sortedScores.map((score) => {
+                    const width = `${Math.min(score.normalized * 100, 100).toFixed(1)}%`;
+                    return (
+                      <div key={score.idx} className="flex items-center gap-2 text-xs sm:text-sm">
+                        <span className="w-24 truncate" title={formatToken(score.token)}>
+                          {formatToken(score.token)}
+                        </span>
+                        <div className="flex-1 h-3 rounded bg-gray-200 dark:bg-gray-800 overflow-hidden">
+                          <div
+                            className="h-full bg-indigo-500"
+                            style={{ width }}
+                            aria-label={`Attention weight to ${formatToken(score.token)}`}
+                          />
+                        </div>
+                        <span className="w-20 text-right text-gray-700 dark:text-gray-200">
+                          {(score.raw * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Explanation: attention scores are probabilities that sum to 1 for each query token. Higher bars mean the selected token is focusing more on that position when constructing its contextual embedding.
+                </p>
               </div>
             </div>
           ) : (
