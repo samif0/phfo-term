@@ -108,8 +108,13 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       const prompt = text.trim() ? text : DEFAULT_TEXT;
       const tokenized = await tokenizer(prompt, { truncation: true, max_length: 64 });
 
-      const tokenIds = Array.from(tokenized.input_ids.data);
-      const readableTokens = tokenizer.convert_ids_to_tokens(tokenIds).map(formatToken);
+      const tokenIds = Array.from(tokenized.input_ids.data as Iterable<number>);
+      const readableTokens =
+        'convert_ids_to_tokens' in tokenizer
+          ? (tokenizer as { convert_ids_to_tokens: (ids: number[]) => string[] })
+              .convert_ids_to_tokens(tokenIds)
+              .map(formatToken)
+          : tokenIds.map((id) => String(id));
 
       setStatus('Running transformer...');
       const output = await model(tokenized, { output_attentions: true });
