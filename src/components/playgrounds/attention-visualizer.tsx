@@ -1,0 +1,267 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AutoModel, AutoTokenizer, Tensor, env, type PreTrainedModel, type PreTrainedTokenizer } from '@xenova/transformers';
+import type { PlaygroundControls } from '@/lib/playground-types';
+
+const DEFAULT_TEXT = 'Transformers use self-attention to decide which words to focus on.';
+
+interface AttentionMap {
+  layers: number[][][][]; // [layer][head][query][key]
+  tokens: string[];
+}
+
+function tensorToHeads(tensor: Tensor): number[][][] {
+  const [batch, heads, seqQ, seqK] = tensor.dims;
+  if (batch !== 1) {
+    throw new Error('Only single-batch attention maps are supported in this playground.');
+  }
+
+  const result: number[][][] = [];
+  const data = Array.from(tensor.data as Float32Array | number[]);
+  let offset = 0;
+
+  for (let h = 0; h < heads; h += 1) {
+    const headMatrix: number[][] = [];
+    for (let i = 0; i < seqQ; i += 1) {
+      headMatrix.push(data.slice(offset, offset + seqK));
+      offset += seqK;
+    }
+    result.push(headMatrix);
+  }
+
+  return result;
+}
+
+function formatToken(token: string): string {
+  if (token === '[CLS]' || token === '[SEP]') {
+    return token;
+  }
+  return token.replace(/^##/, '');
+}
+
+export default function AttentionVisualizer({ isRunning, isPaused, onStop }: PlaygroundControls) {
+  const [text, setText] = useState<string>(DEFAULT_TEXT);
+  const [status, setStatus] = useState<string>('Model not loaded');
+  const [error, setError] = useState<string | null>(null);
+  const [loadingModel, setLoadingModel] = useState<boolean>(false);
+  const [progress, setProgress] = useState<number>(0);
+  const [attention, setAttention] = useState<AttentionMap | null>(null);
+  const [selectedLayer, setSelectedLayer] = useState<number>(0);
+  const [selectedHead, setSelectedHead] = useState<number>(0);
+
+  const tokenizerRef = useRef<PreTrainedTokenizer | null>(null);
+  const modelRef = useRef<PreTrainedModel | null>(null);
+  const isAnalyzing = useRef<boolean>(false);
+
+  useEffect(() => {
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+  }, []);
+
+  const ensureModel = useCallback(async () => {
+    if (tokenizerRef.current && modelRef.current) {
+      return { tokenizer: tokenizerRef.current, model: modelRef.current };
+    }
+
+    setLoadingModel(true);
+    setStatus('Downloading tokenizer and model...');
+    setError(null);
+
+    const tokenizerPromise = AutoTokenizer.from_pretrained('Xenova/distilbert-base-uncased');
+    const modelPromise = AutoModel.from_pretrained('Xenova/distilbert-base-uncased', {
+      quantized: true,
+      progress_callback: (info: unknown) => {
+        const progressInfo = info as { status?: string; progress?: number };
+        if (typeof progressInfo.progress === 'number') {
+          setProgress(Math.round(progressInfo.progress * 100));
+        }
+        if (progressInfo.status) {
+          setStatus(progressInfo.status);
+        }
+      },
+    });
+
+    const [tokenizer, model] = await Promise.all([tokenizerPromise, modelPromise]);
+    tokenizerRef.current = tokenizer;
+    modelRef.current = model;
+
+    setStatus('Model ready');
+    setLoadingModel(false);
+    setProgress(100);
+
+    return { tokenizer, model };
+  }, []);
+
+  const runAttentionAnalysis = useCallback(async () => {
+    if (isAnalyzing.current) return;
+
+    isAnalyzing.current = true;
+    setError(null);
+    setStatus('Preparing input...');
+
+    try {
+      const { tokenizer, model } = await ensureModel();
+      const prompt = text.trim() ? text : DEFAULT_TEXT;
+      const tokenized = await tokenizer(prompt, { truncation: true, max_length: 64 });
+
+      const tokenIds = Array.from(tokenized.input_ids.data);
+      const readableTokens = tokenizer.convert_ids_to_tokens(tokenIds).map(formatToken);
+
+      setStatus('Running transformer...');
+      const output = await model(tokenized, { output_attentions: true });
+
+      const attentions = (output as { attentions?: Tensor[] }).attentions;
+      if (!attentions || attentions.length === 0) {
+        throw new Error('The model did not return attention maps.');
+      }
+
+      const layerMaps = attentions.map(tensorToHeads);
+      setAttention({ tokens: readableTokens, layers: layerMaps });
+      setSelectedLayer(layerMaps.length - 1);
+      setSelectedHead(0);
+      setStatus(`Captured ${layerMaps.length} layers with ${layerMaps[0].length} heads each.`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error while running the model.';
+      setError(message);
+      setStatus('Encountered an error');
+    } finally {
+      isAnalyzing.current = false;
+      onStop();
+    }
+  }, [ensureModel, onStop, text]);
+
+  useEffect(() => {
+    if (isRunning && !isPaused) {
+      void runAttentionAnalysis();
+    }
+  }, [isPaused, isRunning, runAttentionAnalysis]);
+
+  const activeHead = useMemo(() => {
+    if (!attention) return null;
+    const layer = attention.layers[selectedLayer];
+    if (!layer) return null;
+    return layer[selectedHead] ?? null;
+  }, [attention, selectedHead, selectedLayer]);
+
+  const topFocus = useMemo(() => {
+    if (!attention || !activeHead) return [] as { token: string; weight: number }[];
+    return activeHead.map((row, idx) => ({
+      token: attention.tokens[idx],
+      weight: row.reduce((sum, value) => sum + value, 0) / row.length,
+    }))
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 5);
+  }, [activeHead, attention]);
+
+  return (
+    <div className="space-y-4 h-full">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Enter text and press the Run button above. The playground will load a real DistilBERT model from Hugging Face and display the self-attention weights for your input.
+      </p>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="attention-text">Input text</label>
+        <textarea
+          id="attention-text"
+          className="w-full h-28 rounded border border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-gray-900/60 p-3 text-sm"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type a sentence or short paragraph to inspect."
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <span className="px-2 py-1 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60">
+          {status}{loadingModel ? ` (${progress}% )` : ''}
+        </span>
+        {error && <span className="text-red-500">{error}</span>}
+      </div>
+
+      {attention && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div>
+              <label className="text-xs uppercase tracking-wide text-gray-500">Layer</label>
+              <select
+                className="ml-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-1 text-sm"
+                value={selectedLayer}
+                onChange={(e) => setSelectedLayer(Number(e.target.value))}
+              >
+                {attention.layers.map((_, idx) => (
+                  <option key={idx} value={idx}>Layer {idx}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-gray-500">Head</label>
+              <select
+                className="ml-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-1 text-sm"
+                value={selectedHead}
+                onChange={(e) => setSelectedHead(Number(e.target.value))}
+              >
+                {attention.layers[selectedLayer].map((_, idx) => (
+                  <option key={idx} value={idx}>Head {idx}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {activeHead ? (
+            <div className="space-y-3">
+              <div className="overflow-auto border border-gray-200 dark:border-gray-800 rounded-lg">
+                <table className="min-w-full text-[11px]">
+                  <thead>
+                    <tr>
+                      <th className="sticky left-0 bg-gray-100 dark:bg-gray-900 text-left px-2 py-1">Token →</th>
+                      {attention.tokens.map((token, idx) => (
+                        <th key={idx} className="px-2 py-1 whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          {formatToken(token)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeHead.map((row, rowIdx) => (
+                      <tr key={rowIdx}>
+                        <th className="sticky left-0 bg-gray-100 dark:bg-gray-900 text-left px-2 py-1 font-medium whitespace-nowrap">
+                          {formatToken(attention.tokens[rowIdx])}
+                        </th>
+                        {row.map((value, colIdx) => {
+                          const intensity = Math.min(Math.max(value, 0), 1);
+                          const background = `rgba(79, 70, 229, ${intensity})`;
+                          const textColor = intensity > 0.6 ? 'text-white' : 'text-gray-900 dark:text-gray-100';
+                          return (
+                            <td
+                              key={colIdx}
+                              className={`text-center px-2 py-1 ${textColor}`}
+                              style={{ backgroundColor: background }}
+                              title={`Attention from "${attention.tokens[rowIdx]}" to "${attention.tokens[colIdx]}": ${(value * 100).toFixed(2)}%`}
+                            >
+                              {(value * 100).toFixed(1)}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="space-y-1 text-sm">
+                <div className="font-semibold">Top focusing tokens (average outgoing weight)</div>
+                <ul className="list-disc list-inside text-gray-600 dark:text-gray-300">
+                  {topFocus.map((item, idx) => (
+                    <li key={idx}>{formatToken(item.token)} — {(item.weight * 100).toFixed(1)}%</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500">No attention head selected.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
