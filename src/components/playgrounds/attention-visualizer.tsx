@@ -34,10 +34,13 @@ function tensorToHeads(tensor: Tensor): number[][][] {
 }
 
 function formatToken(token: string): string {
-  if (token === '[CLS]' || token === '[SEP]') {
+  const specialTokens = new Set(['[CLS]', '[SEP]', '<s>', '</s>']);
+  if (specialTokens.has(token)) {
     return token;
   }
-  return token.replace(/^##/, '');
+
+  // Clean up common BERT/RoBERTa subword markers.
+  return token.replace(/^##/, '').replace(/^Ġ/, '').replace(/^▁/, '');
 }
 
 export default function AttentionVisualizer({ isRunning, isPaused, onStop }: PlaygroundControls) {
@@ -68,8 +71,8 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
     setStatus('Downloading tokenizer and model...');
     setError(null);
 
-    const tokenizerPromise = AutoTokenizer.from_pretrained('Xenova/distilbert-base-uncased');
-    const modelPromise = AutoModel.from_pretrained('Xenova/distilbert-base-uncased', {
+    const tokenizerPromise = AutoTokenizer.from_pretrained('Xenova/roberta-base');
+    const modelPromise = AutoModel.from_pretrained('Xenova/roberta-base', {
       quantized: true,
       progress_callback: (info: unknown) => {
         const progressInfo = info as { status?: string; progress?: number };
@@ -157,7 +160,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
   return (
     <div className="space-y-4 h-full">
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Enter text and press the Run button above. The playground will load a real DistilBERT model from Hugging Face and display the self-attention weights for your input.
+        Enter text and press the Run button above. The playground loads a modern RoBERTa-base transformer from Hugging Face and displays the self-attention weights for your input.
       </p>
 
       <div className="space-y-2">
