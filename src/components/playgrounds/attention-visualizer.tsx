@@ -66,10 +66,21 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
 
   useEffect(() => {
     if (!attention) return;
+    if (selectedLayer >= attention.layers.length) {
+      setSelectedLayer(Math.max(attention.layers.length - 1, 0));
+      setSelectedHead(0);
+      return;
+    }
+
+    const layer = attention.layers[selectedLayer];
+    if (selectedHead >= layer.length) {
+      setSelectedHead(0);
+    }
+
     if (selectedToken >= attention.tokens.length) {
       setSelectedToken(0);
     }
-  }, [attention, selectedToken]);
+  }, [attention, selectedHead, selectedLayer, selectedToken]);
 
   const ensureModel = useCallback(async () => {
     if (tokenizerRef.current && modelRef.current) {
@@ -251,7 +262,8 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="px-2 py-1 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60">
-          {status}{loadingModel ? ` (${progress}% )` : ''}
+          {status}
+          {loadingModel ? ` (${progress}%)` : ''}
         </span>
         {error && <span className="text-red-500">{error}</span>}
       </div>
