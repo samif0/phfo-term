@@ -9,6 +9,7 @@ const playgroundComponents: Record<string, React.LazyExoticComponent<React.Compo
   'game-of-life': lazy(() => import('@/components/playgrounds/game-of-life')),
   'l-systems': lazy(() => import('@/components/playgrounds/l-systems')),
   'mlp-visualizer': lazy(() => import('@/components/playgrounds/mlp-visualizer')),
+  'transformer-attention': lazy(() => import('@/components/playgrounds/attention-visualizer')),
   // Add more components here as needed
 };
 
