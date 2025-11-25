@@ -20,7 +20,7 @@ export const playgroundPrograms: Record<string, PlaygroundProgram> = {
   'transformer-attention': {
     id: 'transformer-attention',
     name: 'Attention',
-    description: 'Load a real Hugging Face transformer and inspect its self-attention weights',
+    description: 'Run a vanilla transformer and visualize its attention weights on your text',
   },
   // Add more playground programs here in the future
   // 'langtons-ant': {
