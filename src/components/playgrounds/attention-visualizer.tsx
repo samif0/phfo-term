@@ -55,6 +55,18 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
   const [selectedToken, setSelectedToken] = useState<number>(0);
   const [scoreMode, setScoreMode] = useState<'head' | 'layer-average'>('head');
 
+  const extractAttentions = useCallback((output: unknown): Tensor[] | undefined => {
+    const maybeAttentions = output as {
+      attentions?: Tensor[];
+      encoder_attentions?: Tensor[];
+      cross_attentions?: Tensor[];
+    };
+
+    return (
+      maybeAttentions.attentions ?? maybeAttentions.encoder_attentions ?? maybeAttentions.cross_attentions
+    );
+  }, []);
+
   const tokenizerRef = useRef<PreTrainedTokenizer | null>(null);
   const modelRef = useRef<PreTrainedModel | null>(null);
   const isAnalyzing = useRef<boolean>(false);
@@ -62,6 +74,15 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
   useEffect(() => {
     env.allowLocalModels = false;
     env.useBrowserCache = true;
+    // Disable proxying to web workers to avoid postMessage errors in some environments
+    // and run inference on the main thread where the playground already executes.
+    if (env.backends?.onnx?.wasm) {
+      env.backends.onnx.wasm.proxy = false;
+      env.backends.onnx.wasm.numThreads = 1;
+    }
+    // Provide a remote host explicitly so the model resolution code doesn't fall back to
+    // an undefined model class when the config fetch is redirected.
+    env.remoteHost = 'https://huggingface.co';
   }, []);
 
   useEffect(() => {
@@ -105,6 +126,10 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       },
       config: {
         // Ensure the model generates attention tensors when we ask for them during inference.
+        // Explicitly set the architecture to avoid falling back to a null/undefined class when
+        // remote config requests are cached incorrectly in the browser.
+        architectures: ['RobertaModel'],
+        model_type: 'roberta',
         output_attentions: true,
       },
     });
@@ -145,13 +170,20 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
           : tokenIds.map((id) => String(id));
 
       setStatus('Running transformer...');
-      const output = await model(tokenized, { output_attentions: true });
+      let output = await model(tokenized, { output_attentions: true });
+      let attentions = extractAttentions(output);
 
-      const attentions =
-        (output as { attentions?: Tensor[]; encoder_attentions?: Tensor[] }).attentions ??
-        (output as { attentions?: Tensor[]; encoder_attentions?: Tensor[] }).encoder_attentions;
       if (!attentions || attentions.length === 0) {
-        throw new Error('The model did not return attention maps.');
+        setStatus('Retrying with attention outputs forced...');
+        if (model.config) {
+          model.config.output_attentions = true;
+        }
+        output = await model(tokenized, { output_attentions: true });
+        attentions = extractAttentions(output);
+      }
+
+      if (!attentions || attentions.length === 0) {
+        throw new Error('The model did not return attention maps after retrying.');
       }
 
       const layerMaps = attentions.map(tensorToHeads);
@@ -168,7 +200,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       isAnalyzing.current = false;
       onStop();
     }
-  }, [ensureModel, onStop, text]);
+  }, [ensureModel, extractAttentions, onStop, text]);
 
   useEffect(() => {
     if (isRunning && !isPaused) {
