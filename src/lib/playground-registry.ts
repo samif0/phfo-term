@@ -19,7 +19,7 @@ export const playgroundPrograms: Record<string, PlaygroundProgram> = {
   },
   'transformer-attention': {
     id: 'transformer-attention',
-    name: 'Transformer Attention',
+    name: 'Attention',
     description: 'Load a real Hugging Face transformer and inspect its self-attention weights',
   },
   // Add more playground programs here in the future
