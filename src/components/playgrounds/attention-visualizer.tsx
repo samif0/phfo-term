@@ -48,6 +48,18 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
   const [selectedLayer, setSelectedLayer] = useState<number>(0);
   const [selectedHead, setSelectedHead] = useState<number>(0);
 
+  const extractAttentions = useCallback((output: unknown): Tensor[] | undefined => {
+    const maybeAttentions = output as {
+      attentions?: Tensor[];
+      encoder_attentions?: Tensor[];
+      cross_attentions?: Tensor[];
+    };
+
+    return (
+      maybeAttentions.attentions ?? maybeAttentions.encoder_attentions ?? maybeAttentions.cross_attentions
+    );
+  }, []);
+
   const tokenizerRef = useRef<PreTrainedTokenizer | null>(null);
   const modelRef = useRef<PreTrainedModel | null>(null);
   const runningRef = useRef<boolean>(false);
@@ -124,7 +136,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       runningRef.current = false;
       onStop();
     }
-  }, [ensureModel, onStop, text]);
+  }, [ensureModel, extractAttentions, onStop, text]);
 
   useEffect(() => {
     if (isRunning && !isPaused) {
