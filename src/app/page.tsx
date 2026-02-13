@@ -15,8 +15,7 @@ export default async function Home() {
           width={120}
           height={120}
           priority
-          style={{ width: 'auto', height: 'auto' }}
-          className="rounded-lg shadow-lg"
+          className="h-[120px] w-[120px] rounded-lg shadow-lg"
         />
       </div>
       <HomeClient admin={admin} />

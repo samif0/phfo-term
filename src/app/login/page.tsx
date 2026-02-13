@@ -35,8 +35,7 @@ export default function LoginPage() {
           alt="Sami"
           width={120}
           height={120}
-          style={{ width: 'auto', height: 'auto' }}
-          className="rounded-lg shadow-lg"
+          className="h-[120px] w-[120px] rounded-lg shadow-lg"
         />
         <form onSubmit={handleSubmit} className="flex flex-col items-center gap-2">
           <input
