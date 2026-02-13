@@ -14,7 +14,7 @@ const DEFAULT_TEXT = 'The moonlight spills across the ocean as the city sleeps.'
 const MAX_INPUT_TOKENS = 64;
 
 const LLAMA_CANDIDATES = [
-  'HuggingFaceH4/tiny-random-LlamaForCausalLM',
+  'Xenova/TinyLlama-1.1B-Chat-v1.0',
 ];
 
 interface AttentionRun {
