@@ -231,6 +231,36 @@ function normalizeTokenId(raw: unknown): number {
   throw new Error('Unsupported token id type.');
 }
 
+async function idsToDisplayTokens(tokenizer: PreTrainedTokenizer, tokenIds: number[]): Promise<string[]> {
+  if (
+    'convert_ids_to_tokens' in tokenizer &&
+    typeof (tokenizer as { convert_ids_to_tokens?: unknown }).convert_ids_to_tokens === 'function'
+  ) {
+    const converted = (tokenizer as { convert_ids_to_tokens: (ids: number[]) => string[] }).convert_ids_to_tokens(tokenIds);
+    return converted.map((token, index) => (token && token.length > 0 ? token : String(tokenIds[index])));
+  }
+
+  if ('decode' in tokenizer && typeof (tokenizer as { decode?: unknown }).decode === 'function') {
+    const decode = (tokenizer as {
+      decode: (ids: number[], options?: Record<string, unknown>) => Promise<string> | string;
+    }).decode;
+
+    const decoded = await Promise.all(
+      tokenIds.map(async (tokenId) => {
+        const value = await decode([tokenId], {
+          skip_special_tokens: false,
+          clean_up_tokenization_spaces: false,
+        });
+        return typeof value === 'string' ? value : String(value);
+      })
+    );
+
+    return decoded.map((token, index) => (token && token.length > 0 ? token : String(tokenIds[index])));
+  }
+
+  return tokenIds.map(String);
+}
+
 export default function AttentionVisualizer({ isRunning, isPaused, onStop }: PlaygroundControls) {
   const [text, setText] = useState<string>(DEFAULT_TEXT);
   const [status, setStatus] = useState<string>('Idle');
@@ -299,9 +329,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
         throw new Error('Please provide a longer input so at least two tokens are available.');
       }
 
-      const tokens = 'convert_ids_to_tokens' in tokenizer
-        ? (tokenizer as { convert_ids_to_tokens: (ids: number[]) => string[] }).convert_ids_to_tokens(tokenIds)
-        : tokenIds.map(String);
+      const tokens = await idsToDisplayTokens(tokenizer, tokenIds);
 
       setStatus('Simulating Llama-style decoder block computations...');
       setProgress(40);
