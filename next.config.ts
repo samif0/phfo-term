@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig & { webpack?: Function } = {
   trailingSlash: true,
-  distDir: 'build',
+  distDir: process.env.VERCEL ? '.next' : 'build',
   images: {
     unoptimized: true,
   },
