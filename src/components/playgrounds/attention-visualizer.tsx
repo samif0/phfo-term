@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AutoModelForCausalLM,
+  AutoModel,
   AutoTokenizer,
+  env,
   type Tensor,
   type PreTrainedModel,
   type PreTrainedTokenizer,
@@ -15,6 +16,7 @@ const MAX_INPUT_TOKENS = 64;
 
 const LLAMA_CANDIDATES = [
   'Xenova/TinyLlama-1.1B-Chat-v1.0',
+  'Xenova/distilgpt2',
 ];
 
 interface AttentionRun {
@@ -120,8 +122,15 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
   const modelRef = useRef<PreTrainedModel | null>(null);
   const modelIdRef = useRef<string | null>(null);
   const runningRef = useRef<boolean>(false);
+  const envConfiguredRef = useRef<boolean>(false);
 
   const ensureModel = useCallback(async () => {
+    if (!envConfiguredRef.current) {
+      env.allowLocalModels = false;
+      env.allowRemoteModels = true;
+      envConfiguredRef.current = true;
+    }
+
     if (tokenizerRef.current && modelRef.current && modelIdRef.current) {
       return {
         tokenizer: tokenizerRef.current,
@@ -139,7 +148,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
         const tokenizer = await AutoTokenizer.from_pretrained(candidate);
 
         setStatus(`Loading model: ${candidate}`);
-        const model = await AutoModelForCausalLM.from_pretrained(candidate, {
+        const model = await AutoModel.from_pretrained(candidate, {
           quantized: true,
           progress_callback: (info: unknown) => {
             const payload = info as { status?: string; progress?: number };
@@ -164,9 +173,13 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
       }
     }
 
-    throw lastError instanceof Error
-      ? lastError
-      : new Error('Failed to load a Llama model from all configured candidates.');
+    if (lastError instanceof Error) {
+      if (lastError.message.includes('/models/')) {
+        throw new Error('Model loading failed: local /models path was requested by the runtime. Check browser cache and refresh.');
+      }
+      throw lastError;
+    }
+    throw new Error('Failed to load a decoder model from all configured candidates.');
   }, []);
 
   const runDecoderBlockInspection = useCallback(async () => {
