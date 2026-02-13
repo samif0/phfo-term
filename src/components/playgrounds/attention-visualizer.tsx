@@ -232,30 +232,30 @@ function normalizeTokenId(raw: unknown): number {
 }
 
 async function idsToDisplayTokens(tokenizer: PreTrainedTokenizer, tokenIds: number[]): Promise<string[]> {
+  const maybeModel = tokenizer as { model?: { vocab?: unknown } };
+  const rawVocab = maybeModel.model?.vocab;
+
+  if (Array.isArray(rawVocab)) {
+    return tokenIds.map((tokenId) => {
+      const value = rawVocab[tokenId];
+      return typeof value === 'string' && value.length > 0 ? value : String(tokenId);
+    });
+  }
+
+  if (rawVocab && typeof rawVocab === 'object') {
+    const vocabObject = rawVocab as Record<string, unknown>;
+    return tokenIds.map((tokenId) => {
+      const value = vocabObject[String(tokenId)];
+      return typeof value === 'string' && value.length > 0 ? value : String(tokenId);
+    });
+  }
+
   if (
     'convert_ids_to_tokens' in tokenizer &&
     typeof (tokenizer as { convert_ids_to_tokens?: unknown }).convert_ids_to_tokens === 'function'
   ) {
     const converted = (tokenizer as { convert_ids_to_tokens: (ids: number[]) => string[] }).convert_ids_to_tokens(tokenIds);
     return converted.map((token, index) => (token && token.length > 0 ? token : String(tokenIds[index])));
-  }
-
-  if ('decode' in tokenizer && typeof (tokenizer as { decode?: unknown }).decode === 'function') {
-    const decode = (tokenizer as {
-      decode: (ids: number[], options?: Record<string, unknown>) => Promise<string> | string;
-    }).decode;
-
-    const decoded = await Promise.all(
-      tokenIds.map(async (tokenId) => {
-        const value = await decode([tokenId], {
-          skip_special_tokens: false,
-          clean_up_tokenization_spaces: false,
-        });
-        return typeof value === 'string' ? value : String(value);
-      })
-    );
-
-    return decoded.map((token, index) => (token && token.length > 0 ? token : String(tokenIds[index])));
   }
 
   return tokenIds.map(String);
