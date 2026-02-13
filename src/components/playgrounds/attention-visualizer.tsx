@@ -213,6 +213,24 @@ function rowFromHiddenState(hiddenState: number[][], tokenIndex: number): number
   return hiddenState[tokenIndex];
 }
 
+function normalizeTokenId(raw: unknown): number {
+  if (typeof raw === 'bigint') {
+    if (raw > BigInt(Number.MAX_SAFE_INTEGER) || raw < BigInt(Number.MIN_SAFE_INTEGER)) {
+      throw new Error('Token id is outside Number safe range.');
+    }
+    return Number(raw);
+  }
+
+  if (typeof raw === 'number') {
+    if (!Number.isFinite(raw)) {
+      throw new Error('Token id is not finite.');
+    }
+    return raw;
+  }
+
+  throw new Error('Unsupported token id type.');
+}
+
 export default function AttentionVisualizer({ isRunning, isPaused, onStop }: PlaygroundControls) {
   const [text, setText] = useState<string>(DEFAULT_TEXT);
   const [status, setStatus] = useState<string>('Idle');
@@ -276,7 +294,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
         max_length: MAX_INPUT_TOKENS,
       });
 
-      const tokenIds = Array.from(tokenized.input_ids.data as Iterable<number>);
+      const tokenIds = Array.from(tokenized.input_ids.data as Iterable<unknown>).map(normalizeTokenId);
       if (tokenIds.length < 2) {
         throw new Error('Please provide a longer input so at least two tokens are available.');
       }
