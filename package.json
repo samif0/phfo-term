@@ -6,15 +6,15 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "hash:admin-password": "node scripts/generate_password_hash.mjs",
+    "backup:export": "node scripts/export_content_json.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.758.0",
-    "@aws-sdk/client-secrets-manager": "^3.758.0",
-    "@aws-sdk/lib-dynamodb": "^3.758.0",
     "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.49.1",
     "@xenova/transformers": "^2.17.2",
-    "aws-sdk": "^2.1692.0",
+    "bcryptjs": "^2.4.3",
     "better-react-mathjax": "^2.3.0",
     "immer": "^10.1.1",
     "katex": "^0.16.22",
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
