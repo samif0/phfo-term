@@ -15,7 +15,6 @@ const MAX_INPUT_TOKENS = 64;
 
 const LLAMA_CANDIDATES = [
   'HuggingFaceH4/tiny-random-LlamaForCausalLM',
-  'onnx-community/TinyLlama-1.1B-Chat-v1.0',
 ];
 
 interface AttentionRun {

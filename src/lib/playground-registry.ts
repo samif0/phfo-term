@@ -20,7 +20,7 @@ export const playgroundPrograms: Record<string, PlaygroundProgram> = {
   'transformer-attention': {
     id: 'transformer-attention',
     name: 'Attention',
-    description: 'Run a vanilla transformer and visualize its attention weights on your text',
+    description: 'Inspect one Llama decoder block with per-head attention and residual-stream math',
   },
   // Add more playground programs here in the future
   // 'langtons-ant': {
