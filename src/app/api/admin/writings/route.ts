@@ -1,64 +1,100 @@
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/auth';
-import { PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
-import { getDocClient } from '@/lib/dynamodb';
-import { getDataTableName } from '@/lib/data/table';
+import { getContentRepository } from '@/lib/content-repository';
+import { ensureAdmin } from '@/lib/api/admin-api';
+import { validateDeletePayload, validateWritingPayload } from '@/lib/validation/content';
 
 export async function POST(req: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const authFailure = await ensureAdmin(req, 'admin:writings');
+  if (authFailure) {
+    return authFailure;
   }
-  const data = await req.json();
-  const client = getDocClient();
-  const command = new PutCommand({
-    TableName: getDataTableName(),
-    Item: {
-      '{contentType}#{slug}': `writing#${data.slug}`,
-      metadata: 'metadata',
-      slug: data.slug,
-      title: data.title,
-      content: data.content,
-      date: data.date || new Date().toISOString().split('T')[0],
-    },
-  });
-  await client.send(command);
-  return NextResponse.json({ success: true });
+
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = validateWritingPayload(body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const repository = getContentRepository();
+
+    const existing = await repository.getBySlug('writing', parsed.value.slug);
+    if (existing) {
+      return NextResponse.json({ error: 'slug already exists' }, { status: 409 });
+    }
+
+    await repository.upsert({
+      contentType: 'writing',
+      slug: parsed.value.slug,
+      title: parsed.value.title,
+      content: parsed.value.content,
+      date: parsed.value.date,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to create writing', { error });
+    return NextResponse.json({ error: 'internal_server_error' }, { status: 500 });
+  }
 }
 
 export async function PUT(req: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const authFailure = await ensureAdmin(req, 'admin:writings');
+  if (authFailure) {
+    return authFailure;
   }
-  const data = await req.json();
-  const client = getDocClient();
-  const command = new PutCommand({
-    TableName: getDataTableName(),
-    Item: {
-      '{contentType}#{slug}': `writing#${data.slug}`,
-      metadata: 'metadata',
-      slug: data.slug,
-      title: data.title,
-      content: data.content,
-      date: data.date || new Date().toISOString().split('T')[0],
-    },
-  });
-  await client.send(command);
-  return NextResponse.json({ success: true });
+
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = validateWritingPayload(body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const repository = getContentRepository();
+    const existing = await repository.getBySlug('writing', parsed.value.slug);
+    if (!existing) {
+      return NextResponse.json({ error: 'entry not found' }, { status: 404 });
+    }
+
+    await repository.upsert({
+      contentType: 'writing',
+      slug: parsed.value.slug,
+      title: parsed.value.title,
+      content: parsed.value.content,
+      date: parsed.value.date,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to update writing', { error });
+    return NextResponse.json({ error: 'internal_server_error' }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const authFailure = await ensureAdmin(req, 'admin:writings');
+  if (authFailure) {
+    return authFailure;
   }
-  const { slug } = await req.json();
-  const client = getDocClient();
-  const command = new DeleteCommand({
-    TableName: getDataTableName(),
-    Key: {
-      '{contentType}#{slug}': `writing#${slug}`,
-      metadata: 'metadata',
-    },
-  });
-  await client.send(command);
-  return NextResponse.json({ success: true });
+
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = validateDeletePayload(body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const repository = getContentRepository();
+    const existing = await repository.getBySlug('writing', parsed.value.slug);
+    if (!existing) {
+      return NextResponse.json({ error: 'entry not found' }, { status: 404 });
+    }
+
+    await repository.delete('writing', parsed.value.slug);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete writing', { error });
+    return NextResponse.json({ error: 'internal_server_error' }, { status: 500 });
+  }
 }

@@ -14,6 +14,8 @@ export default async function Home() {
           alt="Sami"
           width={120}
           height={120}
+          priority
+          style={{ width: 'auto', height: 'auto' }}
           className="rounded-lg shadow-lg"
         />
       </div>

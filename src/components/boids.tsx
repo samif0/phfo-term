@@ -157,8 +157,8 @@ export default function Boids() {
       const route = pathname.replace(/\/$/, '');
       const handleMouseMove = (e: MouseEvent) => {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+        const scaleX = lastWidth / rect.width;
+        const scaleY = lastHeight / rect.height;
         const canvasX = (e.clientX - rect.left) * scaleX;
         const canvasY = (e.clientY - rect.top) * scaleY;
         mousePositionRef.current = { x: canvasX, y: canvasY };
@@ -180,8 +180,10 @@ export default function Boids() {
           return;
         }
 
-        canvas.width = newWidth;
-        canvas.height = newHeight;
+        if (!initialized) {
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+        }
 
         lastWidth = newWidth;
         lastHeight = newHeight;
@@ -253,8 +255,8 @@ export default function Boids() {
           };
           const buf = buffersRef.current;
           // initialize buffers - start boids from center with aesthetic burst pattern
-          const centerX = canvas.width / 2;
-          const centerY = canvas.height / 2;
+          const centerX = newWidth / 2;
+          const centerY = newHeight / 2;
           const burstRadius = 20; // tighter starting cluster
           
           for (let i = 0; i < N; i++) {
@@ -297,8 +299,8 @@ export default function Boids() {
             worker.postMessage({
               type: 'init',
               canvas: offscreen,
-              width: canvas.width,
-              height: canvas.height,
+              width: newWidth,
+              height: newHeight,
               neighborRadius: NEIGHBOR_RADIUS,
               maxNeighbors: MAX_NEIGHBORS,
               cellSize,
@@ -319,7 +321,7 @@ export default function Boids() {
             // Send initial theme
             worker.postMessage({ type: 'theme', isDark: theme === 'dark' });
           } else {
-            worker.postMessage({ type: 'resize', width: canvas.width, height: canvas.height, targetPoints: targetsPointRef.current });
+            worker.postMessage({ type: 'resize', width: newWidth, height: newHeight, targetPoints: targetsPointRef.current });
           }
         }
 
@@ -345,8 +347,8 @@ export default function Boids() {
         const btn = e.currentTarget as HTMLElement;
         const rect = btn.getBoundingClientRect();
         const canvasRect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / canvasRect.width;
-        const scaleY = canvas.height / canvasRect.height;
+        const scaleX = lastWidth / canvasRect.width;
+        const scaleY = lastHeight / canvasRect.height;
         hoverTargetRef.current = {
           x: (rect.left + rect.width / 2 - canvasRect.left) * scaleX,
           y: (rect.top + rect.height / 2 - canvasRect.top) * scaleY

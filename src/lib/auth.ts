@@ -1,49 +1,59 @@
 import { cookies } from 'next/headers';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { getAdminTokenSecret } from './secrets';
+import { getAdminPasswordHash, getAdminTokenSecret } from './secrets';
 
 async function sign(payload: string) {
-  console.info('[auth] sign invoked');
   const secret = await getAdminTokenSecret();
   const h = crypto.createHmac('sha256', secret);
   h.update(payload);
   const signature = h.digest('hex');
-  console.info('[auth] sign resolved');
   return `${payload}.${signature}`;
 }
 
 async function verify(token: string): Promise<string | null> {
   const idx = token.lastIndexOf('.');
   if (idx === -1) return null;
+
   const payload = token.slice(0, idx);
   const signature = token.slice(idx + 1);
+
   const secret = await getAdminTokenSecret();
   const h = crypto.createHmac('sha256', secret);
   h.update(payload);
   const expected = h.digest('hex');
-  const sigBuf = Buffer.from(signature);
-  const expBuf = Buffer.from(expected);
+
+  const sigBuf = Buffer.from(signature, 'utf8');
+  const expBuf = Buffer.from(expected, 'utf8');
   if (sigBuf.length !== expBuf.length) return null;
+
   const valid = crypto.timingSafeEqual(sigBuf, expBuf);
   return valid ? payload : null;
 }
 
+export async function verifyAdminPassword(candidatePassword: string): Promise<boolean> {
+  const hash = await getAdminPasswordHash();
+  return bcrypt.compare(candidatePassword, hash);
+}
+
 export async function createAdminToken() {
-  console.info('[auth] createAdminToken invoked');
-  const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 24h
-  const token = await sign(`admin:${exp}`);
-  return token;
+  const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
+  return sign(`admin:${exp}`);
 }
 
 export async function isAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get('adminAuth')?.value;
   if (!token) return false;
+
   const payload = await verify(token);
   if (!payload) return false;
+
   const [role, exp] = payload.split(':');
   if (role !== 'admin') return false;
+
   const expiry = parseInt(exp, 10);
   if (!expiry || Date.now() / 1000 > expiry) return false;
+
   return true;
 }

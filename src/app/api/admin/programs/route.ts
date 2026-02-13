@@ -1,64 +1,100 @@
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/auth';
-import { PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
-import { getDocClient } from '@/lib/dynamodb';
-import { getDataTableName } from '@/lib/data/table';
+import { getContentRepository } from '@/lib/content-repository';
+import { ensureAdmin } from '@/lib/api/admin-api';
+import { validateDeletePayload, validateProgramPayload } from '@/lib/validation/content';
 
 export async function POST(req: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const authFailure = await ensureAdmin(req, 'admin:programs');
+  if (authFailure) {
+    return authFailure;
   }
-  const data = await req.json();
-  const client = getDocClient();
-  const command = new PutCommand({
-    TableName: getDataTableName(),
-    Item: {
-      '{contentType}#{slug}': `program#${data.slug}`,
-      metadata: 'metadata',
-      slug: data.slug,
-      content: data.content,
-      videoName: data.videoName,
-      githubUrl: data.githubUrl,
-    },
-  });
-  await client.send(command);
-  return NextResponse.json({ success: true });
+
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = validateProgramPayload(body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const repository = getContentRepository();
+
+    const existing = await repository.getBySlug('program', parsed.value.slug);
+    if (existing) {
+      return NextResponse.json({ error: 'slug already exists' }, { status: 409 });
+    }
+
+    await repository.upsert({
+      contentType: 'program',
+      slug: parsed.value.slug,
+      content: parsed.value.content,
+      videoName: parsed.value.videoName,
+      githubUrl: parsed.value.githubUrl,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to create program', { error });
+    return NextResponse.json({ error: 'internal_server_error' }, { status: 500 });
+  }
 }
 
 export async function PUT(req: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const authFailure = await ensureAdmin(req, 'admin:programs');
+  if (authFailure) {
+    return authFailure;
   }
-  const data = await req.json();
-  const client = getDocClient();
-  const command = new PutCommand({
-    TableName: getDataTableName(),
-    Item: {
-      '{contentType}#{slug}': `program#${data.slug}`,
-      metadata: 'metadata',
-      slug: data.slug,
-      content: data.content,
-      videoName: data.videoName,
-      githubUrl: data.githubUrl,
-    },
-  });
-  await client.send(command);
-  return NextResponse.json({ success: true });
+
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = validateProgramPayload(body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const repository = getContentRepository();
+    const existing = await repository.getBySlug('program', parsed.value.slug);
+    if (!existing) {
+      return NextResponse.json({ error: 'entry not found' }, { status: 404 });
+    }
+
+    await repository.upsert({
+      contentType: 'program',
+      slug: parsed.value.slug,
+      content: parsed.value.content,
+      videoName: parsed.value.videoName,
+      githubUrl: parsed.value.githubUrl,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to update program', { error });
+    return NextResponse.json({ error: 'internal_server_error' }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const authFailure = await ensureAdmin(req, 'admin:programs');
+  if (authFailure) {
+    return authFailure;
   }
-  const { slug } = await req.json();
-  const client = getDocClient();
-  const command = new DeleteCommand({
-    TableName: getDataTableName(),
-    Key: {
-      '{contentType}#{slug}': `program#${slug}`,
-      metadata: 'metadata',
-    },
-  });
-  await client.send(command);
-  return NextResponse.json({ success: true });
+
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = validateDeletePayload(body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const repository = getContentRepository();
+    const existing = await repository.getBySlug('program', parsed.value.slug);
+    if (!existing) {
+      return NextResponse.json({ error: 'entry not found' }, { status: 404 });
+    }
+
+    await repository.delete('program', parsed.value.slug);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete program', { error });
+    return NextResponse.json({ error: 'internal_server_error' }, { status: 500 });
+  }
 }

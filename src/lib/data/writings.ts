@@ -1,62 +1,43 @@
-import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { getDocClient } from '../dynamodb';
-import { getDataTableName } from './table';
-import { WritingData } from "./types";
+import { getContentRepository } from '@/lib/content-repository';
+import { WritingData } from './types';
+
+function normalizeDate(date?: string, createdAt?: string): string {
+  return date ?? createdAt?.slice(0, 10) ?? '1970-01-01';
+}
 
 export async function getAllWritings(): Promise<WritingData[]> {
-  const client = getDocClient();
+  const repository = getContentRepository();
 
   try {
-    const command = new ScanCommand({
-      TableName: getDataTableName(),
-      FilterExpression: "begins_with(#pk, :prefix)",
-      ExpressionAttributeNames: {
-        "#pk": "{contentType}#{slug}",
-      },
-      ExpressionAttributeValues: {
-        ":prefix": "writing#",
-      },
-    });
-    const response = await client.send(command);
+    const items = await repository.listByType('writing');
 
-    return (response.Items || []).map(item => ({
+    return items.map((item) => ({
       slug: item.slug,
-      title: item.title,
+      title: item.title ?? item.slug,
       content: item.content,
-      date: item.date,
+      date: normalizeDate(item.date, item.createdAt),
     }));
-
   } catch (error) {
-    console.error("Failed to fetch thoughts:", error);
+    console.error('Failed to fetch writings:', error);
     return [];
   }
 }
 
 export async function getWriting(slug: string): Promise<WritingData | undefined> {
-  const client = getDocClient();
+  const repository = getContentRepository();
 
   try {
-    const command = new GetCommand({
-      TableName: getDataTableName(),
-      Key: {
-        '{contentType}#{slug}': `writing#${slug}`,
-        metadata: "metadata",
-      },
-    });
+    const item = await repository.getBySlug('writing', slug);
+    if (!item) {
+      return undefined;
+    }
 
-    const response = await client.send(command);
-
-    if (!response.Item) return undefined;
-    
-    const ret : WritingData = {
-      slug: response.Item.slug,
-      title: response.Item.title,
-      content: response.Item.content,
-      date: response.Item.date,
+    return {
+      slug: item.slug,
+      title: item.title ?? item.slug,
+      content: item.content,
+      date: normalizeDate(item.date, item.createdAt),
     };
-
-    return ret;
-
   } catch (error) {
     console.error(`Failed to fetch writing ${slug}:`, error);
     return undefined;

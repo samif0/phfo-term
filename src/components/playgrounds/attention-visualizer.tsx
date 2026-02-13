@@ -117,7 +117,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
 
       setStatus('Running transformer...');
       const output = await model(tokenized, { output_attentions: true });
-      const attentions = (output as { attentions?: Tensor[] }).attentions;
+      const attentions = extractAttentions(output);
 
       if (!attentions || attentions.length === 0) {
         throw new Error('No attention scores were returned by the model.');

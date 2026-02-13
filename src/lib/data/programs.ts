@@ -1,61 +1,39 @@
-import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { getDocClient } from '../dynamodb';
-import { getDataTableName } from './table';
-import { ProgramData } from "./types";
+import { getContentRepository } from '@/lib/content-repository';
+import { ProgramData } from './types';
 
 export async function getAllPrograms(): Promise<ProgramData[]> {
-  const client = getDocClient();
+  const repository = getContentRepository();
 
   try {
-    const command = new ScanCommand({
-      TableName: getDataTableName(),
-      FilterExpression: "begins_with(#pk, :prefix)",
-      ExpressionAttributeNames: {
-        "#pk": "{contentType}#{slug}",
-      },
-      ExpressionAttributeValues: {
-        ":prefix": "program#",
-      },
-    });
+    const items = await repository.listByType('program');
 
-    const response = await client.send(command);
-
-    return (response.Items || []).map(item => ({
+    return items.map((item) => ({
       slug: item.slug,
       content: item.content,
       videoName: item.videoName,
       githubUrl: item.githubUrl,
     }));
   } catch (error) {
-    console.error("Failed to fetch program:", error);
+    console.error('Failed to fetch programs:', error);
     return [];
   }
 }
 
 export async function getProgram(slug: string): Promise<ProgramData | undefined> {
-  const client = getDocClient();
+  const repository = getContentRepository();
 
   try {
-    const command = new GetCommand({
-      TableName: getDataTableName(),
-      Key: {
-        '{contentType}#{slug}': `program#${slug}`,
-        metadata: "metadata",
-      },
-    });
+    const item = await repository.getBySlug('program', slug);
+    if (!item) {
+      return undefined;
+    }
 
-    const response = await client.send(command);
-
-    if (!response.Item) return undefined;
-    
-    const ret : ProgramData = {
-      slug: response.Item.slug,
-      content: response.Item.content,
-      videoName: response.Item.videoName,
-      githubUrl: response.Item.githubUrl,
+    return {
+      slug: item.slug,
+      content: item.content,
+      videoName: item.videoName,
+      githubUrl: item.githubUrl,
     };
-
-    return ret;
   } catch (error) {
     console.error(`Failed to fetch program ${slug}:`, error);
     return undefined;
