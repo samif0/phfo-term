@@ -14,8 +14,8 @@ import type { PlaygroundControls } from '@/lib/playground-types';
 const DEFAULT_TEXT = 'The moonlight spills across the ocean as the city sleeps.';
 const MAX_INPUT_TOKENS = 64;
 
-const LLAMA_CANDIDATES = [
-  'Xenova/TinyLlama-1.1B-Chat-v1.0',
+const MODEL_CANDIDATES = [
+  'onnx-community/TinyLlama-1.1B-Chat-v1.0-ONNX',
   'Xenova/distilgpt2',
 ];
 
@@ -73,10 +73,11 @@ function extractHiddenStates(output: unknown): Tensor[] | undefined {
 }
 
 function vectorFromHiddenState(tensor: Tensor, tokenIndex: number): number[] {
-  const [batch, seq, hidden] = tensor.dims;
-  if (batch !== 1) {
-    throw new Error('Only single-batch hidden states are supported.');
+  if (tensor.dims.length !== 3) {
+    return [];
   }
+  const [batch, seq, hidden] = tensor.dims;
+  if (batch !== 1) return [];
 
   if (tokenIndex < 0 || tokenIndex >= seq) {
     return [];
@@ -121,28 +122,31 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
   const tokenizerRef = useRef<PreTrainedTokenizer | null>(null);
   const modelRef = useRef<PreTrainedModel | null>(null);
   const modelIdRef = useRef<string | null>(null);
+  const modelIndexRef = useRef<number>(-1);
   const runningRef = useRef<boolean>(false);
   const envConfiguredRef = useRef<boolean>(false);
 
-  const ensureModel = useCallback(async () => {
+  const ensureModel = useCallback(async (startIndex = 0) => {
     if (!envConfiguredRef.current) {
       env.allowLocalModels = false;
       env.allowRemoteModels = true;
       envConfiguredRef.current = true;
     }
 
-    if (tokenizerRef.current && modelRef.current && modelIdRef.current) {
+    if (tokenizerRef.current && modelRef.current && modelIdRef.current && modelIndexRef.current >= startIndex) {
       return {
         tokenizer: tokenizerRef.current,
         model: modelRef.current,
         modelId: modelIdRef.current,
+        candidateIndex: modelIndexRef.current,
       };
     }
 
     setError(null);
 
     let lastError: unknown = null;
-    for (const candidate of LLAMA_CANDIDATES) {
+    for (let i = startIndex; i < MODEL_CANDIDATES.length; i += 1) {
+      const candidate = MODEL_CANDIDATES[i];
       try {
         setStatus(`Loading tokenizer: ${candidate}`);
         const tokenizer = await AutoTokenizer.from_pretrained(candidate);
@@ -164,10 +168,11 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
         tokenizerRef.current = tokenizer;
         modelRef.current = model;
         modelIdRef.current = candidate;
+        modelIndexRef.current = i;
         setStatus(`Model ready (${candidate})`);
         setProgress(100);
 
-        return { tokenizer, model, modelId: candidate };
+        return { tokenizer, model, modelId: candidate, candidateIndex: i };
       } catch (err) {
         lastError = err;
       }
@@ -175,7 +180,7 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
 
     if (lastError instanceof Error) {
       if (lastError.message.includes('/models/')) {
-        throw new Error('Model loading failed: local /models path was requested by the runtime. Check browser cache and refresh.');
+        throw new Error('Model loading failed: local /models path was requested by the runtime. Hard refresh and try again.');
       }
       throw lastError;
     }
@@ -188,49 +193,76 @@ export default function AttentionVisualizer({ isRunning, isPaused, onStop }: Pla
 
     try {
       setError(null);
-      const { tokenizer, model, modelId } = await ensureModel();
       const prompt = text.trim() ? text : DEFAULT_TEXT;
+      let startIndex = 0;
+      let lastExecutionError: unknown = null;
+      let completed = false;
 
-      setStatus('Tokenizing input...');
-      const tokenized = await tokenizer(prompt, {
-        truncation: true,
-        max_length: MAX_INPUT_TOKENS,
-      });
+      while (!completed && startIndex < MODEL_CANDIDATES.length) {
+        const { tokenizer, model, modelId, candidateIndex } = await ensureModel(startIndex);
 
-      const tokenIds = Array.from(tokenized.input_ids.data as Iterable<number>);
-      const tokens = 'convert_ids_to_tokens' in tokenizer
-        ? (tokenizer as { convert_ids_to_tokens: (ids: number[]) => string[] }).convert_ids_to_tokens(tokenIds)
-        : tokenIds.map(String);
+        try {
+          setStatus(`Tokenizing input (${modelId})...`);
+          const tokenized = await tokenizer(prompt, {
+            truncation: true,
+            max_length: MAX_INPUT_TOKENS,
+          });
 
-      setStatus('Running decoder...');
-      const output = await model(tokenized, {
-        output_attentions: true,
-        output_hidden_states: true,
-      });
+          const tokenIds = Array.from(tokenized.input_ids.data as Iterable<number>);
+          const tokens = 'convert_ids_to_tokens' in tokenizer
+            ? (tokenizer as { convert_ids_to_tokens: (ids: number[]) => string[] }).convert_ids_to_tokens(tokenIds)
+            : tokenIds.map(String);
 
-      const attentionTensors = extractDecoderAttentions(output);
-      if (!attentionTensors || attentionTensors.length === 0) {
-        throw new Error('No decoder attentions were returned by the model.');
+          setStatus(`Running decoder (${modelId})...`);
+          const output = await model(tokenized, {
+            output_attentions: true,
+            output_hidden_states: true,
+            use_cache: false,
+          });
+
+          const attentionTensors = extractDecoderAttentions(output);
+          if (!attentionTensors || attentionTensors.length === 0) {
+            throw new Error('No decoder attentions were returned by the model.');
+          }
+
+          const hiddenStates = extractHiddenStates(output);
+          if (!hiddenStates || hiddenStates.length < 2) {
+            throw new Error('No decoder hidden states were returned by the model.');
+          }
+
+          const layers = convertAttentionTensors(attentionTensors);
+          const lastLayer = layers.length - 1;
+
+          setRun({
+            modelId,
+            tokens,
+            layers,
+            hiddenStates,
+          });
+          setSelectedLayer(lastLayer);
+          setSelectedHead(0);
+          setSelectedToken(tokens.length - 1);
+          setStatus(`Ready: ${layers.length} decoder layers, ${layers[0].length} heads (${modelId}).`);
+          completed = true;
+        } catch (executionError) {
+          lastExecutionError = executionError;
+          tokenizerRef.current = null;
+          modelRef.current = null;
+          modelIdRef.current = null;
+          modelIndexRef.current = -1;
+          startIndex = candidateIndex + 1;
+
+          if (startIndex < MODEL_CANDIDATES.length) {
+            setStatus(`Execution failed on ${modelId}. Trying fallback model...`);
+          }
+        }
       }
 
-      const hiddenStates = extractHiddenStates(output);
-      if (!hiddenStates || hiddenStates.length < 2) {
-        throw new Error('No decoder hidden states were returned by the model.');
+      if (!completed) {
+        throw lastExecutionError instanceof Error
+          ? lastExecutionError
+          : new Error('Failed to run decoder block analysis on all configured models.');
       }
-
-      const layers = convertAttentionTensors(attentionTensors);
-      const lastLayer = layers.length - 1;
-
-      setRun({
-        modelId,
-        tokens,
-        layers,
-        hiddenStates,
-      });
-      setSelectedLayer(lastLayer);
-      setSelectedHead(0);
-      setSelectedToken(tokens.length - 1);
-      setStatus(`Ready: ${layers.length} decoder layers, ${layers[0].length} heads.`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown decoder error.';
       setError(message);
