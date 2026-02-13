@@ -35,6 +35,9 @@ export default async function WritingsPage() {
     <div className="min-h-screen relative">
       <Boids />
       <div className="flex flex-col items-center justify-center min-h-screen gap-8 py-12">
+        <div className="max-w-xl rounded-md border border-amber-500/40 bg-amber-100/70 px-4 py-3 text-center text-sm text-amber-900 dark:border-amber-400/40 dark:bg-amber-900/30 dark:text-amber-100">
+          Note: My AWS account was compromised and the previous writings data was deleted. I am rebuilding this section.
+        </div>
         {/* This Month Section */}
         {thisMonthWritings.length > 0 && (
           <div className="flex flex-col items-center gap-4">

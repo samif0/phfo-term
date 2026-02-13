@@ -34,8 +34,8 @@ export default function LoginPage() {
           src="/images/pixelated-sami.png"
           alt="Sami"
           width={120}
-          height={120}
-          className="h-[120px] w-[120px] rounded-lg shadow-lg"
+          height={180}
+          className="rounded-lg shadow-lg"
         />
         <form onSubmit={handleSubmit} className="flex flex-col items-center gap-2">
           <input

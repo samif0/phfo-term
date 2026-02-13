@@ -13,9 +13,9 @@ export default async function Home() {
           src="/images/pixelated-sami.png"
           alt="Sami"
           width={120}
-          height={120}
+          height={180}
           priority
-          className="h-[120px] w-[120px] rounded-lg shadow-lg"
+          className="rounded-lg shadow-lg"
         />
       </div>
       <HomeClient admin={admin} />
