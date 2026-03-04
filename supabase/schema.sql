@@ -16,6 +16,24 @@ create table if not exists public.content_items (
 create unique index if not exists content_items_type_slug_key
   on public.content_items (content_type, slug);
 
+-- Enable Row Level Security
+alter table public.content_items enable row level security;
+
+-- Allow anonymous/public read access; writes require service_role key
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where tablename = 'content_items' and policyname = 'Allow public read access'
+  ) then
+    create policy "Allow public read access"
+      on public.content_items
+      for select
+      using (true);
+  end if;
+end
+$$;
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
