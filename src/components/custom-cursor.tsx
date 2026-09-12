@@ -1,87 +1,120 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef } from 'react';
 
+const NATIVE_CURSOR_TARGETS = [
+  'input', 'textarea', 'select', 'iframe', 'video', 'audio',
+  '[contenteditable]:not([contenteditable="false"])',
+  '[draggable="true"]', ':disabled', '[aria-disabled="true"]',
+  '[data-cursor="native"]',
+].join(', ');
+
+const INTERACTIVE_TARGETS = [
+  'a[href]', 'button', 'summary', '[role="button"]', '[role="link"]',
+  '[data-cursor="hover"]', '.cursor-pointer',
+].join(', ');
 
 export default function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
-  const pos = useRef({ x: 0, y: 0 });
-  // useRef requires an initial value; we start with undefined to store the
-  // requestAnimationFrame id once it's set.
-  const rafId = useRef<number | undefined>(undefined);
-  const [hovering, setHovering] = useState(false);
-  const [birdColor, setBirdColor] = useState('');
 
   useEffect(() => {
-    const updatePosition = () => {
-      if (cursorRef.current) {
-        const { x, y } = pos.current;
-        cursorRef.current.style.left = `${x}px`;
-        cursorRef.current.style.top = `${y}px`;
-      }
-      rafId.current = undefined;
+    const cursor = cursorRef.current;
+    if (!cursor) return;
+
+    const root = document.documentElement;
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const forcedColors = window.matchMedia('(forced-colors: active)');
+    let frame: number | undefined;
+    let position = { x: 0, y: 0 };
+    let mousePresent = false;
+
+    const hide = () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      frame = undefined;
+      delete root.dataset.customCursor;
+      cursor.dataset.visible = 'false';
+      cursor.dataset.pressed = 'false';
     };
-    const handleMove = (e: MouseEvent) => {
-      pos.current = { x: e.clientX, y: e.clientY };
-      if (rafId.current === undefined) {
-        rafId.current = requestAnimationFrame(updatePosition);
+
+    const updateTarget = (target: EventTarget | null) => {
+      if (!mousePresent || !finePointer.matches || forcedColors.matches ||
+          !(target instanceof Element) || target.closest(NATIVE_CURSOR_TARGETS)) {
+        hide();
+        return;
       }
-    };
-    const handleOver = (e: Event) => {
-      const target = e.target as HTMLElement;
-      const interactive = target.closest('a, button, [data-cursor="hover"]') as
-        | HTMLElement
-        | null;
-      if (interactive) {
-        const styles = window.getComputedStyle(interactive);
-        let base = styles.backgroundColor;
-        if (!base || base === 'rgba(0, 0, 0, 0)' || base === 'transparent') {
-          base = styles.color;
-        }
-        const rgb = base.match(/\d+/g)?.map(Number) ?? [0, 0, 0];
-        const luminance = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
-        setBirdColor(luminance > 186 ? '#000' : '#fff');
-        setHovering(true);
-      }
-    };
-    const handleOut = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('a, button, [data-cursor="hover"]')) {
-        setHovering(false);
-        setBirdColor('');
+
+      // Crossing a control's text or icon should never reset its hover state.
+      cursor.dataset.hover = String(Boolean(target.closest(INTERACTIVE_TARGETS)));
+      if (frame === undefined) {
+        frame = requestAnimationFrame(() => {
+          cursor.style.transform = `translate3d(${position.x}px, ${position.y}px, 0)`;
+          cursor.dataset.visible = 'true';
+          root.dataset.customCursor = 'active';
+          frame = undefined;
+        });
       }
     };
 
-    document.addEventListener('pointermove', handleMove);
-    document.addEventListener('pointerover', handleOver);
-    document.addEventListener('pointerout', handleOut);
-    return () => {
-      document.removeEventListener('pointermove', handleMove);
-      document.removeEventListener('pointerover', handleOver);
-      document.removeEventListener('pointerout', handleOut);
-      if (rafId.current !== undefined) {
-        cancelAnimationFrame(rafId.current);
+    const move = (event: PointerEvent) => {
+      mousePresent = event.pointerType === 'mouse';
+      position = { x: event.clientX, y: event.clientY };
+      updateTarget(event.target);
+    };
+
+    const press = (event: PointerEvent) => {
+      move(event);
+      if (event.pointerType === 'mouse' && event.button === 0) {
+        cursor.dataset.pressed = 'true';
       }
+    };
+
+    const release = () => { cursor.dataset.pressed = 'false'; };
+    const leave = () => {
+      mousePresent = false;
+      hide();
+    };
+    const pointerOut = (event: PointerEvent) => {
+      if (!event.relatedTarget) leave();
+    };
+    const visibilityChange = () => {
+      if (document.hidden) leave();
+    };
+    const refreshTarget = () => {
+      updateTarget(document.elementFromPoint(position.x, position.y));
+    };
+
+    document.addEventListener('pointermove', move, { passive: true });
+    document.addEventListener('pointerover', move, { passive: true });
+    document.addEventListener('pointerout', pointerOut);
+    document.addEventListener('pointerdown', press);
+    document.addEventListener('pointerup', release);
+    document.addEventListener('pointercancel', leave);
+    document.addEventListener('visibilitychange', visibilityChange);
+    document.addEventListener('scroll', refreshTarget, { passive: true, capture: true });
+    window.addEventListener('blur', leave);
+    finePointer.addEventListener('change', leave);
+    forcedColors.addEventListener('change', leave);
+
+    return () => {
+      leave();
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerover', move);
+      document.removeEventListener('pointerout', pointerOut);
+      document.removeEventListener('pointerdown', press);
+      document.removeEventListener('pointerup', release);
+      document.removeEventListener('pointercancel', leave);
+      document.removeEventListener('visibilitychange', visibilityChange);
+      document.removeEventListener('scroll', refreshTarget, true);
+      window.removeEventListener('blur', leave);
+      finePointer.removeEventListener('change', leave);
+      forcedColors.removeEventListener('change', leave);
     };
   }, []);
 
   return (
-    <div
-      ref={cursorRef}
-      className={`custom-cursor ${hovering ? 'hover' : ''}`}
-    >
-      <svg className="cursor-outer" width="24" height="24">
-        <circle cx="12" cy="12" r="11" />
-      </svg>
-      <div className="cursor-inner" />
-      <div
-        className="cursor-birds"
-        style={{ '--bird-color': birdColor } as CSSProperties}
-      >
-        {Array.from({ length: 8 }).map((_, i) => (
-          <span key={i} className="bird" />
-        ))}
-      </div>
+    <div ref={cursorRef} className="custom-cursor" aria-hidden="true">
+      <span className="cursor-halo" />
+      <span className="cursor-dot" />
     </div>
   );
 }
