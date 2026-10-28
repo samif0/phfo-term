@@ -444,6 +444,7 @@ self.onmessage = (e) => {
     case "resize":
       canvas.width = data.width;
       canvas.height = data.height;
+      if (typeof data.mouseInfluenceRadius === "number") mouseInfluenceRadius = data.mouseInfluenceRadius;
       targetPoints = data.targetPoints;
       initBuffers();
       // reinitialize quadtree on resize
@@ -460,6 +461,7 @@ self.onmessage = (e) => {
     case "viewport":
       canvas.width = data.width;
       canvas.height = data.height;
+      if (typeof data.mouseInfluenceRadius === "number") mouseInfluenceRadius = data.mouseInfluenceRadius;
       // reinitialize quadtree without resetting boids
       qt = new Quadtree(
         new Rectangle(

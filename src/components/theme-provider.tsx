@@ -35,6 +35,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
     localStorage.setItem('theme', theme);
+    // tint mobile browser chrome to match the page
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', getComputedStyle(root).getPropertyValue('--background').trim());
   }, [theme, mounted]);
 
   const toggleTheme = () => {

@@ -41,8 +41,10 @@ export default function PlaygroundContainer({ program }: PlaygroundContainerProp
 
   const Component = playgroundComponents[program.id];
 
+  // Stacked under the program list on phones nothing above has a definite height,
+  // so take one screen; the canvases size themselves from this box
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-screen h-svh md:h-full">
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <h2 className="text-xl font-bold mb-2">{program.name}</h2>
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{program.description}</p>

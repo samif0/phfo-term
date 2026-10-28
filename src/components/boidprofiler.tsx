@@ -13,8 +13,9 @@ export default function BoidProfiler() {
     return () => clearInterval(id);
   }, []);
 
+  // sits above the theme toggle; on phones it only crowded the footer
   return (
-    <div className="fixed bottom-2 right-2 z-50 bg-black bg-opacity-50 text-xs text-white px-2 py-1 rounded">
+    <div className="hidden sm:block fixed bottom-16 right-4 z-50 bg-black bg-opacity-50 text-xs text-white px-2 py-1 rounded">
       {frameTime.toFixed(1)} ms
     </div>
   );

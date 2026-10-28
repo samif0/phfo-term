@@ -12,54 +12,30 @@ export default function HomeClient({ admin }: { admin: boolean }) {
 
   useEffect(() => {
     const onScroll = () => {
-      setShowNav(window.scrollY > window.innerHeight * 0.1);
+      const pastHero = window.scrollY > window.innerHeight * 0.1;
+      setShowNav(pastHero);
+      if (!pastHero) setMenuOpen(false);
     };
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const Buttons = ({ onClick }: { onClick?: () => void } = {}) => (
+  // `fill` stretches each button across its grid cell on phones
+  const Buttons = ({ onClick, fill = false }: { onClick?: () => void; fill?: boolean } = {}) => (
     <>
-      <Link href="/writings">
-        <Button
-          text="writings"
-          variant="outline"
-          size="medium"
-          icon={<ArrowRightIcon className="h-3 w-3" />}
-          iconPosition="right"
-          onClick={onClick}
-        />
-      </Link>
-      <Link href="/thoughts">
-        <Button
-          text="thoughts"
-          variant="outline"
-          size="medium"
-          icon={<ArrowRightIcon className="h-3 w-3" />}
-          iconPosition="right"
-          onClick={onClick}
-        />
-      </Link>
-      <Link href="/programs">
-        <Button
-          text="programs"
-          variant="outline"
-          size="medium"
-          icon={<ArrowRightIcon className="h-3 w-3" />}
-          iconPosition="right"
-          onClick={onClick}
-        />
-      </Link>
-      <Link href="/playground">
-        <Button
-          text="playground"
-          variant="outline"
-          size="medium"
-          icon={<ArrowRightIcon className="h-3 w-3" />}
-          iconPosition="right"
-          onClick={onClick}
-        />
-      </Link>
+      {['writings', 'thoughts', 'programs', 'playground'].map((name) => (
+        <Link key={name} href={`/${name}`} className={fill ? 'block' : undefined}>
+          <Button
+            text={name}
+            variant="outline"
+            size="medium"
+            icon={<ArrowRightIcon className="h-3 w-3" />}
+            iconPosition="right"
+            onClick={onClick}
+            className={fill ? 'mono-button--fill' : ''}
+          />
+        </Link>
+      ))}
     </>
   );
 
@@ -79,7 +55,7 @@ export default function HomeClient({ admin }: { admin: boolean }) {
   return (
     <>
       <nav
-        className={`fixed top-0 w-full bg-[rgba(var(--background-rgb),0.8)] backdrop-blur-sm flex justify-center sm:justify-center gap-4 py-2 z-40 transition-opacity ${showNav ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed top-0 w-full bg-[rgb(var(--background-rgb)/0.8)] backdrop-blur-sm flex justify-center sm:justify-center gap-4 py-2 z-40 transition-opacity ${showNav ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <div className="hidden sm:flex gap-4">
           <Buttons />
@@ -91,21 +67,22 @@ export default function HomeClient({ admin }: { admin: boolean }) {
         </div>
       </nav>
       {menuOpen && showNav && (
-        <div className="sm:hidden fixed top-10 left-0 right-0 bg-[rgba(var(--background-rgb),0.95)] backdrop-blur-md flex flex-col items-center gap-2 py-4 z-40">
-          <Buttons onClick={() => setMenuOpen(false)} />
+        <div className="sm:hidden fixed top-10 left-0 right-0 bg-[rgb(var(--background-rgb)/0.95)] backdrop-blur-md grid grid-cols-2 gap-3 px-4 py-4 z-40">
+          <Buttons fill onClick={() => setMenuOpen(false)} />
         </div>
       )}
-      <section className="flex flex-col items-center justify-end min-h-screen pb-16 md:pb-20">
+      {/* svh keeps the buttons above mobile browser toolbars; min-h-screen is the fallback */}
+      <section className="flex flex-col items-center justify-end min-h-screen min-h-svh pb-24 sm:pb-16 md:pb-20">
         {!showNav && (
           <>
             <ScrollUpArrow />
-            <div className="flex justify-center gap-4">
-              <Buttons />
+            <div className="grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none sm:justify-center sm:gap-4">
+              <Buttons fill />
             </div>
           </>
         )}
       </section>
-      <section className="max-w-3xl mx-auto mt-20 space-y-6 bg-[rgba(var(--background-rgb),0.6)] backdrop-blur-md p-6 text-red-700 dark:text-gray-300">
+      <section className="max-w-3xl mx-auto mt-20 space-y-6 bg-[rgb(var(--background-rgb)/0.6)] backdrop-blur-md p-6 text-red-700 dark:text-gray-300">
         <div className="text-center sm:text-left">
           <h1 className="text-4xl sm:text-5xl font-semibold text-red-800 dark:text-gray-400">hello.</h1>
           <h2 className="mt-2 text-xl sm:text-2xl" style={{ color: 'rgba(180, 90, 70, 0.9)' }}>

@@ -8,14 +8,15 @@ export default async function Home() {
   return (
     <>
       <HomeBackground />
-      <div className="fixed top-4 right-4 z-50 flex flex-col items-center gap-2">
+      {/* On phones it scrolls away with the hero instead of covering the text and menu below */}
+      <div className="absolute sm:fixed top-4 right-4 z-30 sm:z-50 flex flex-col items-center gap-2">
         <Image
           src="/images/pixelated-sami.png"
           alt="Sami"
           width={120}
           height={180}
           priority
-          className="rounded-lg shadow-lg"
+          className="rounded-lg shadow-lg w-24 h-auto sm:w-[120px]"
         />
       </div>
       <HomeClient admin={admin} />
