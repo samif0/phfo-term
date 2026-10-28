@@ -177,10 +177,12 @@
     border-color: #1a1a1a;
   }
   
-  .mono-button--primary:hover {
-    background-color: #000000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    .mono-button--primary:hover {
+      background-color: #000000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+    }
   }
   
   .mono-button--primary:active {
@@ -194,10 +196,12 @@
     border-color: #e6e6e6;
   }
   
-  .mono-button--secondary:hover {
-    background-color: #d9d9d9;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    .mono-button--secondary:hover {
+      background-color: #d9d9d9;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
   }
   
   .mono-button--secondary:active {
@@ -211,11 +215,13 @@
     border-color: var(--foreground);
   }
   
-  .mono-button--outline:hover {
-    background-color: var(--foreground);
-    color: var(--background);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    .mono-button--outline:hover {
+      background-color: var(--foreground);
+      color: var(--background);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
   }
   
   .mono-button--outline:active {
@@ -229,11 +235,13 @@
     border-color: transparent;
   }
   
-  .mono-button--ghost:hover {
-    background-color: var(--foreground);
-    color: var(--background);
-    opacity: 0.1;
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    .mono-button--ghost:hover {
+      background-color: var(--foreground);
+      color: var(--background);
+      opacity: 0.1;
+      transform: translateY(-1px);
+    }
   }
   
   .mono-button--ghost:active {
@@ -297,19 +305,31 @@
     }
   }
 
+  /* Touch screens get the inverted look while pressed instead of a sticky hover */
+  @media (hover: none) {
+    .mono-button--outline:active {
+      background-color: var(--foreground);
+      color: var(--background);
+    }
+  }
+
+  /* Long labels wrap inside the button instead of running off small screens */
   @media (max-width: 768px) {
     .mono-button {
-      display: block;
-      width: 100%;
-      margin: 0.5rem 0;
-      flex-direction: column;
-    }
-    .mono-button__icon--left,
-    .mono-button__icon--right {
-      margin: 0;
+      max-width: 100%;
     }
     .mono-button__text {
-      margin-bottom: 0.5rem;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  /* Fills a grid cell on phones; trimmed padding keeps "playground" on one line at 360px */
+  @media (max-width: 639px) {
+    .mono-button--fill {
+      width: 100%;
+      padding-left: 8px;
+      padding-right: 8px;
     }
   }
 

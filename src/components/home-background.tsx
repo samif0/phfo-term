@@ -7,9 +7,9 @@ const Lreplicator = dynamic(() => import('./Lreplicator'), { ssr: false });
 
 export default function HomeBackground() {
   return (
-    <div className="hidden sm:block">
+    <>
       <Boids />
       <Lreplicator />
-    </div>
+    </>
   );
 }

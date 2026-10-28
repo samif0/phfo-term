@@ -29,6 +29,15 @@ const COLORS_LIGHT = [
     'rgba(180, 100, 50, 0.05)',      // 7: countdown 1
 ];
 
+const DIRECTIONS = [
+    [-1, -1], [-1, 0], [-1, 1],
+    [0, -1], [0, 1],
+    [1, -1], [1, 0], [1, 1]
+];
+
+// ~3 frames at 60Hz; timed rather than counted so 120Hz phones don't run it twice as fast
+const GENERATION_MS = 50;
+
 export default function Lreplicator() {
     const { theme } = useTheme();
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,13 +66,8 @@ export default function Lreplicator() {
     // Count active neighbors
     const countActiveNeighbors = useCallback((grid: number[][], x: number, y: number, width: number, height: number): number => {
         let count = 0;
-        const directions = [
-            [-1, -1], [-1, 0], [-1, 1],
-            [0, -1], [0, 1],
-            [1, -1], [1, 0], [1, 1]
-        ];
 
-        for (const [dx, dy] of directions) {
+        for (const [dx, dy] of DIRECTIONS) {
             const nx = x + dx;
             const ny = y + dy;
             if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
@@ -148,40 +152,43 @@ export default function Lreplicator() {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // Size from the element: h-screen tracks the large viewport on phones, so the
+        // browser toolbar collapsing during scroll doesn't restart the pattern
+        const setup = () => {
+            const pixelWidth = canvas.clientWidth || window.innerWidth;
+            const pixelHeight = canvas.clientHeight || window.innerHeight;
+            canvas.width = pixelWidth;
+            canvas.height = pixelHeight;
 
-        // Calculate grid dimensions based on screen size
-        const width = Math.floor(window.innerWidth / CELL_SIZE);
-        const height = Math.floor(window.innerHeight / CELL_SIZE);
-        dimensionsRef.current = { width, height };
-        initGrid(width, height);
+            // Calculate grid dimensions based on screen size
+            const width = Math.floor(pixelWidth / CELL_SIZE);
+            const height = Math.floor(pixelHeight / CELL_SIZE);
+            dimensionsRef.current = { width, height };
+            initGrid(width, height);
+        };
 
-        let frameCount = 0;
-        const FRAMES_PER_UPDATE = 3; // Slightly slower propagation
+        setup();
 
-        const animate = () => {
-            frameCount++;
+        let lastUpdate = 0;
 
-            if (frameCount % FRAMES_PER_UPDATE === 0) {
+        const animate = (now: number) => {
+            // 1ms of slack absorbs frame timing jitter
+            if (now - lastUpdate >= GENERATION_MS - 1) {
+                lastUpdate = now;
                 updateGrid(dimensionsRef.current.width, dimensionsRef.current.height);
+                // The picture only changes once per generation
+                draw(dimensionsRef.current.width, dimensionsRef.current.height);
             }
-
-            draw(dimensionsRef.current.width, dimensionsRef.current.height);
             animationRef.current = requestAnimationFrame(animate);
         };
 
-        animate();
+        animationRef.current = requestAnimationFrame(animate);
 
         const handleResize = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            // Recalculate grid dimensions
-            const newWidth = Math.floor(window.innerWidth / CELL_SIZE);
-            const newHeight = Math.floor(window.innerHeight / CELL_SIZE);
-            dimensionsRef.current = { width: newWidth, height: newHeight };
-            initGrid(newWidth, newHeight);
+            const width = canvas.clientWidth || window.innerWidth;
+            const height = canvas.clientHeight || window.innerHeight;
+            if (width === canvas.width && height === canvas.height) return;
+            setup();
         };
 
         window.addEventListener('resize', handleResize);
@@ -205,7 +212,7 @@ export default function Lreplicator() {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed inset-0 pointer-events-none"
+            className="fixed top-0 left-0 w-screen h-screen pointer-events-none"
             style={{
                 zIndex: 0,
                 opacity: 0.5,
