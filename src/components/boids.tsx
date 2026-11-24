@@ -421,7 +421,7 @@ export default function Boids() {
             <canvas
                 key="boids-canvas"
                 ref={canvasRef}
-                className="fixed top-0 left-0 w-screen h-screen opacity-40"
+                className="fixed top-0 left-0 w-screen h-screen opacity-40 pointer-events-none"
                 style={{ transform: `translateY(${scrollOffset}px)` }}
             />
 
